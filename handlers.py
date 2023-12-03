@@ -740,10 +740,10 @@ async def yt_statistic(message: types.Message, state: FSMContext):
     cell_index = [0,1,2,3,4,5,10,12,16,17,22,23,31]
     for i, val in enumerate(cell_index):
         cell_list[val].value = data[i]
-    cell_list.pop(9)
-    cell_list.pop(11)
-    cell_list.pop(34)
     cell_list.pop(41)
+    cell_list.pop(34)
+    cell_list.pop(11)
+    cell_list.pop(9)
     sheet.update_cells(cell_list)
     await state.finish()
     await start(message)
@@ -937,9 +937,9 @@ async def vk_statistic(message: types.Message, state: FSMContext):
     cell_index = [0,1,2,3,4,5,9,11,14,16,24,25,33]
     for i, val in enumerate(cell_index):
         cell_list[val].value = data[i]
-    cell_list.pop(10)
-    cell_list.pop(34)
     cell_list.pop(41)
+    cell_list.pop(34)
+    cell_list.pop(10)
     sheet.update_cells(cell_list)
     await state.finish()
     await start(message)
