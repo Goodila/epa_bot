@@ -1012,7 +1012,7 @@ async def vk_statistic(message: types.Message, state: FSMContext):
         await state.finish()
         await start_again(message)
     else:
-        await number_wrong(message)
+        await number_wrong(message, number=False)
 
 
 #НАЧАЛО ОПРОСА TG
@@ -1203,7 +1203,7 @@ async def tg_statistic(message: types.Message, state: FSMContext):
         await state.finish()
         await start_again(message)
     else:
-        await number_wrong(message)
+        await number_wrong(message, number=False)
 
 
 #НАЧАЛО ОПРОСА DZ
@@ -1269,7 +1269,7 @@ async def dz_link(message: types.Message, state: FSMContext):
         await message.answer(text=text, reply_markup=markup)
         await state.set_state(DZ.Topic.state)
     else:
-        await number_wrong(message)
+        await number_wrong(message, number=False)
 
 
 async def dz_topic_choose(message: types.Message, state: FSMContext):
