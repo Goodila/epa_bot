@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from aiogram.utils.markdown import hlink
 from aiogram.dispatcher import FSMContext
 from aiogram import types
+import validators
+import phonenumbers
 
 @dataclass
 class Config:
@@ -48,7 +50,19 @@ class Bloger:
             return blogers[self.id]
         
 
+def is_link(url):
+    return validators.url(url)
 
+
+def is_number(number):
+    try:
+        res = phonenumbers.parse(number, "RU")
+    except:
+        return False
+    if res.country_code == 7 and len(str(res.national_number)) == 10:
+        return True
+    else:
+        return False
 
 
 

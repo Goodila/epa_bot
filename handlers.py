@@ -4,7 +4,7 @@ from keyboards import start_keyboard, colab_keyboard, manager_keyboard, bloger_k
 from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard
 from aiogram.dispatcher import FSMContext
 from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ
-from funcs import get_config, Bloger
+from funcs import get_config, Bloger, is_link, is_number
 import time
 from asyncio import sleep
 
@@ -27,13 +27,20 @@ client = gspread.authorize(creds)
 # sheet = spreadsheet.get_worksheet(0)  # 0 refers to the first sheet
 
 
+async def number_wrong(message, number=True):
+    text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
+    if number == False:
+        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+
+
 async def start(message: types.Message):
-    text = '''"Приветствую! 
-Приветствую! На связи бот Единого Рекламного Агентства ЕРА ✌🏻
+    text = '''Приветствую! На связи бот Единого Рекламного Агентства ЕРА ✌🏻
 
 С моей помощью Вы можете: 
-✏️ подать анкету , если хотите работать у нас в компании
 ✏️ заполнить данные, чтобы попасть в базу блогеров ЕРА и получать рекламные предложения
+✏️ подать анкету , если хотите работать у нас в компании
 
 В разделе сотрудничество:
 ✏️ заполнить заявку на сотрудничество если ты менеджер блогеров
@@ -48,6 +55,13 @@ async def start(message: types.Message):
         await message.message.edit_text(text=text, reply_markup=markup)
 
 
+
+async def start_again(message: types.Message):
+    text = '''Вы закончили регистрацию! Можете продолжить работу с нашим ботом в других разделах. '''
+    markup = await start_keyboard()
+    await message.answer(text=text, reply_markup=markup)
+
+
 async def back_start(message: types.Message, state: FSMContext):
     ''' старт после отмены регистрации'''
     await state.finish()
@@ -56,11 +70,7 @@ async def back_start(message: types.Message, state: FSMContext):
 
 async def help(message: types.Message):
     await message.answer('help')
-# "1567091116": {
-#         "name": "2",
-#         "number": "+79781897045",
-#         "address": "\u0443\u043b. \u041f\u0443\u0448\u043a\u0438\u043d\u0430, \u0434. \u041a\u043e\u043b\u043e\u0442\u0443\u0448\u043a\u0438\u043d\u0430"
-#     }
+
 
 async def me(message: types.Message):
     print(message)
@@ -79,11 +89,17 @@ async def start_poll_work(message: types.Message, state: FSMContext):
 
 async def work_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер телефона, спрашивает имя'''
-    await state.update_data(number=message.text)
-    text = 'Впишите свое полное ФИО'
-    await state.set_state(Work.Name.state)
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
+    if is_number(message.text) == True:
+        await state.update_data(number=message.text)
+        text = 'Впишите свое полное ФИО'
+        await state.set_state(Work.Name.state)
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+    else:
+        text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+
 
 
 async def work_name(message: types.Message, state: FSMContext):
@@ -131,13 +147,19 @@ async def work_know_from(message: types.Message, state: FSMContext):
     await state.set_state(Work.Link_resume.state)
 
 
+
 async def work_resume(message: types.Message, state: FSMContext):
     ''' Запоминает резюме, спрашивает кейсы'''
-    await state.update_data(resume=message.text)
-    text = 'Ссылка на кейсы.\n*Впишите ссылку или впишите "нет"'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Link_case.state)
+    if is_link(message.text) == True:
+        await state.update_data(resume=message.text)
+        text = 'Ссылка на кейсы.\n*Впишите ссылку или впишите "нет"'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+        await state.set_state(Work.Link_case.state)
+    else:
+        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
 
 
 async def work_case(message: types.Message, state: FSMContext):
@@ -159,7 +181,7 @@ async def work_load(message: types.Message, state: FSMContext):
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
-    await start(message)
+    await start_again(message)
 
 
 async def collaboration(message: types.Message):
@@ -197,20 +219,30 @@ async def barter_name(message: types.Message, state: FSMContext):
 
 async def barter_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер телефона, спрашивает ссылку на соцсеть'''
-    await state.update_data(number=message.text)
-    text = 'пришлите ссылку на свою основную соцсеть'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Barter.Link.state)
+    if is_number(message.text) == True:
+        await state.update_data(number=message.text)
+        text = 'пришлите ссылку на свою основную соцсеть'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+        await state.set_state(Barter.Link.state)
+    else:
+        text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
 
 
 async def barter_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на основную соцсеть и спрашивает количетсво подписчиков'''
-    await state.update_data(link=message.text)
-    text = 'Впишите количество ваших подписчиков'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Barter.Subs.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        text = 'Впишите количество ваших подписчиков'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+        await state.set_state(Barter.Subs.state)
+    else:
+        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
 
 
 async def barter_subs(message: types.Message, state: FSMContext):
@@ -232,7 +264,7 @@ async def barter_city(message: types.Message, state: FSMContext):
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
-    await start(message)
+    await start_again(message)
 
 
 #НАЧАЛО ОПРОСА МЕНЕДЖЕР
@@ -249,12 +281,14 @@ async def start_poll_manager(message: types.Message, state: FSMContext):
 
 async def manager_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер телефона, спрашивает Name'''
-    await state.update_data(number=message.text)
-    text = 'Впишите свое полное имя.'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Manager.Name.state)
-
+    if is_number(message.text) == True:
+        await state.update_data(number=message.text)
+        text = 'Впишите свое полное имя.'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+        await state.set_state(Manager.Name.state)
+    else:
+        await number_wrong(message)
 
 async def manager_name(message: types.Message, state: FSMContext):
     ''' Запоминает имя, спрашивает ссылку на список блогеров'''
@@ -267,11 +301,14 @@ async def manager_name(message: types.Message, state: FSMContext):
 
 async def manager_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на список блогеров и спрашивает последний вопрос'''
-    await state.update_data(link=message.text)
-    text = 'Помимо предоставления своих блогеров для рекламных интеграций, заинтересованы ли вы также в подборе блогеров под конкретный рекламный запрос?'
-    markup = await manager_keyboard()
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(Manager.Q.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        text = 'Помимо предоставления своих блогеров для рекламных интеграций, заинтересованы ли вы также в подборе блогеров под конкретный рекламный запрос?'
+        markup = await manager_keyboard()
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(Manager.Q.state)
+    else:
+        await number_wrong(message, number=False)
 
 
 async def manager_q(message: types.Message, state: FSMContext):
@@ -284,7 +321,7 @@ async def manager_q(message: types.Message, state: FSMContext):
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
-    await start(message)
+    await start_again(message)
 
 
 #НАЧАЛО ОПРОСА СОТРУДНИЧЕСТВО 
@@ -337,15 +374,18 @@ async def colab_reason(message: types.Message, state: FSMContext):
 
 async def colab_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер, заканчивает регистрацию'''
-    await state.update_data(number=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(3)  
-    data = await state.get_data()
-    sheet.append_row(list(data.values()))
-    await state.finish()
-    await start(message)
+    if is_number(message.text) == True:
+        await state.update_data(number=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_era_id)
+        sheet = spreadsheet.get_worksheet(3)  
+        data = await state.get_data()
+        sheet.append_row(list(data.values()))
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message)
 
 
 #НАЧАЛО ОПРОСА БЛОГЕР
@@ -386,8 +426,12 @@ async def inst_number(call: types.CallbackQuery, state: FSMContext):
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
         await start_poll_inst(call, state, flag = True)
     else:
-        await state.update_data(number=call.text)
-        Bloger(f"{call.from_user.id}").record(call.text)
+        if is_number(call.text) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
+            return
     text = 'Отправьте ссылку на Ваш Instagram'
     markup = await back_keyboard('Отменить регистрацию')
     await call.answer(text, reply_markup=markup)
@@ -408,13 +452,16 @@ async def inst_number_wait(message: types.Message, state: FSMContext):
 
 async def inst_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на инст и спрашивает тематику'''
-    await state.update_data(link=message.text)
-    await state.update_data(topic=[])
-    lst = get_config(flag=True)
-    text = 'Выберите тематику Вашего контента:'
-    markup = await topic_keyboard(lst)
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(Instagram.Topic.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематику Вашего контента:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(Instagram.Topic.state)
+    else:
+        await number_wrong(message, number=False)
 
 
 async def inst_topic_choose(message: types.Message, state: FSMContext):
@@ -533,22 +580,25 @@ async def inst_reels_scope(message: types.Message, state: FSMContext):
 
 async def inst_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
-    await state.update_data(statistic=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-    sheet = spreadsheet.get_worksheet(0)  
-    num=len(sheet.col_values(1)) + 1
-    data = await state.get_data()
-    data = list(data.values())
-    cell_list = sheet.range(f'A{num}:AQ{num}')  
-    cell_index = [0,1,2,3,4,5,10,11,18,19,27,28,33]
-    for i, val in enumerate(cell_index):
-        cell_list[val].value = data[i]
-    cell_list.pop(9)
-    sheet.update_cells(cell_list)
-    await state.finish()
-    await start(message)
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(0)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')  
+        cell_index = [0,1,2,3,4,5,10,11,18,19,27,28,33]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(9)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message, number=False)
 
 
 #НАЧАЛО ОПРОСА YOUTUBE
@@ -580,8 +630,12 @@ async def yt_number(call: types.CallbackQuery, state: FSMContext):
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
         await start_poll_yt(call, state, flag = True)
     else:
-        await state.update_data(number=call.text)
-        Bloger(f"{call.from_user.id}").record(call.text)
+        if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
+            return
     text = 'Ссылка на YouTube канал \n*В формате https://www.youtube.com/channel'
     markup = await back_keyboard('Отменить регистрацию')
     await call.answer(text=text, reply_markup=markup)
@@ -602,13 +656,16 @@ async def yt_number_wait(message: types.Message, state: FSMContext):
 
 async def yt_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на yt и спрашивает тематику'''
-    await state.update_data(link=message.text)
-    await state.update_data(topic=[])
-    lst = get_config(flag=True)
-    text = 'Выберите тематики, подходящие под ваш блог:'
-    markup = await topic_keyboard(lst)
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(YT.Topic.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематики, подходящие под ваш блог:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(YT.Topic.state)
+    else:
+        await number_wrong(message, number=False)
 
 
 async def yt_topic_choose(message: types.Message, state: FSMContext):
@@ -728,25 +785,28 @@ async def yt_video_views(message: types.Message, state: FSMContext):
 
 async def yt_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
-    await state.update_data(statistic=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-    sheet = spreadsheet.get_worksheet(1)  
-    num=len(sheet.col_values(1)) + 1
-    data = await state.get_data()
-    data = list(data.values())
-    cell_list = sheet.range(f'A{num}:AQ{num}')  
-    cell_index = [0,1,2,3,4,5,10,12,16,17,22,23,31]
-    for i, val in enumerate(cell_index):
-        cell_list[val].value = data[i]
-    cell_list.pop(41)
-    cell_list.pop(34)
-    cell_list.pop(11)
-    cell_list.pop(9)
-    sheet.update_cells(cell_list)
-    await state.finish()
-    await start(message)
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(1)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')  
+        cell_index = [0,1,2,3,4,5,10,12,16,17,22,23,31]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(41)
+        cell_list.pop(34)
+        cell_list.pop(11)
+        cell_list.pop(9)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message, number=False)
 
 
 #НАЧАЛО ОПРОСА VK
@@ -778,8 +838,11 @@ async def vk_number(call: types.CallbackQuery, state: FSMContext):
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
         await start_poll_vk(call, state, flag = True)
     else:
-        await state.update_data(number=call.text)
-        Bloger(f"{call.from_user.id}").record(call.text)
+        if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
     text = 'Ссылка на страницу Вконтакте'
     markup = await back_keyboard('Отменить регистрацию')
     await call.answer(text=text, reply_markup=markup)

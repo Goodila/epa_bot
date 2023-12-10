@@ -6,9 +6,9 @@ EventsCallback = CallbackData('event', 'action', 'id')
 
 async def start_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-        InlineKeyboardButton(text='Сотрудничетсво', callback_data='collaboration'),
-        InlineKeyboardButton(text='Хочу работать в ЕРА', callback_data='work'),
         InlineKeyboardButton(text='Хочу быть блогером ЕРА', callback_data='bloger'),
+        InlineKeyboardButton(text='Хочу работать в ЕРА', callback_data='work'),
+        InlineKeyboardButton(text='Сотрудничетсво', callback_data='collaboration'),
         InlineKeyboardButton(text='Контакты', callback_data='contacts')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
