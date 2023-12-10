@@ -843,6 +843,7 @@ async def vk_number(call: types.CallbackQuery, state: FSMContext):
             Bloger(f"{call.from_user.id}").record(call.text)
         else:
             await number_wrong(call)
+            return
     text = 'Ссылка на страницу Вконтакте'
     markup = await back_keyboard('Отменить регистрацию')
     await call.answer(text=text, reply_markup=markup)
@@ -863,13 +864,16 @@ async def vk_number_wait(message: types.Message, state: FSMContext):
 
 async def vk_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на vk и спрашивает тематику'''
-    await state.update_data(link=message.text)
-    await state.update_data(topic=[])
-    lst = get_config(flag=True)
-    text = 'Выберите тематики, подходящие под ваш блог:'
-    markup = await topic_keyboard(lst)
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(VK.Topic.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематики, подходящие под ваш блог:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(VK.Topic.state)
+    else:
+        await number_wrong(message)
 
 
 async def vk_topic_choose(message: types.Message, state: FSMContext):
@@ -988,24 +992,27 @@ async def vk_clip(message: types.Message, state: FSMContext):
 
 async def vk_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
-    await state.update_data(statistic=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-    sheet = spreadsheet.get_worksheet(2)  
-    num=len(sheet.col_values(1)) + 1
-    data = await state.get_data()
-    data = list(data.values())
-    cell_list = sheet.range(f'A{num}:AQ{num}')
-    cell_index = [0,1,2,3,4,5,9,11,14,16,24,25,33]
-    for i, val in enumerate(cell_index):
-        cell_list[val].value = data[i]
-    cell_list.pop(41)
-    cell_list.pop(34)
-    cell_list.pop(10)
-    sheet.update_cells(cell_list)
-    await state.finish()
-    await start(message)
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(2)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0,1,2,3,4,5,9,11,14,16,24,25,33]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(41)
+        cell_list.pop(34)
+        cell_list.pop(10)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message)
 
 
 #НАЧАЛО ОПРОСА TG
@@ -1038,8 +1045,12 @@ async def tg_number(call: types.CallbackQuery, state: FSMContext):
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
         await start_poll_tg(call, state, flag = True)
     else:
-        await state.update_data(number=call.text)
-        Bloger(f"{call.from_user.id}").record(call.text)
+        if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
+            return
     text = '''Ссылка на Telegram канал
 *В формате https://t.me/channel'''
     markup = await back_keyboard('Отменить регистрацию')
@@ -1062,13 +1073,16 @@ async def tg_number_wait(message: types.Message, state: FSMContext):
 
 async def tg_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на tg и спрашивает тематику'''
-    await state.update_data(link=message.text)
-    await state.update_data(topic=[])
-    lst = get_config(flag=True)
-    text = 'Выберите тематики, подходящие под ваш блог:'
-    markup = await topic_keyboard(lst)
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(TG.Topic.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематики, подходящие под ваш блог:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(TG.Topic.state)
+    else:
+        await number_wrong(message, number=False)
 
 
 async def tg_topic_choose(message: types.Message, state: FSMContext):
@@ -1169,24 +1183,27 @@ async def tg_description(message: types.Message, state: FSMContext):
 
 async def tg_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
-    await state.update_data(statistic=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-    sheet = spreadsheet.get_worksheet(3)  
-    num=len(sheet.col_values(1)) + 1
-    data = await state.get_data()
-    data = list(data.values())
-    cell_list = sheet.range(f'A{num}:AQ{num}')
-    cell_index = [0,1,2,3,4,5,10,12,20,23,25]
-    for i, val in enumerate(cell_index):
-        cell_list[val].value = data[i]
-    cell_list.pop(33)
-    cell_list.pop(22)
-    cell_list.pop(8)
-    sheet.update_cells(cell_list)
-    await state.finish()
-    await start(message)
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(3)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0,1,2,3,4,5,10,12,20,23,25]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(33)
+        cell_list.pop(22)
+        cell_list.pop(8)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message)
 
 
 #НАЧАЛО ОПРОСА DZ
@@ -1218,8 +1235,12 @@ async def dz_number(call: types.CallbackQuery, state: FSMContext):
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
         await start_poll_dz(call, state, flag = True)
     else:
-        await state.update_data(number=call.text)
-        Bloger(f"{call.from_user.id}").record(call.text)
+        if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
+            return
     text = '''Ссылка на страницу Дзен'''
     await call.answer(text=text)
     await state.set_state(DZ.Link.state)
@@ -1239,13 +1260,16 @@ async def dz_number_wait(message: types.Message, state: FSMContext):
 
 async def dz_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на dz и спрашивает тематику'''
-    await state.update_data(link=message.text)
-    await state.update_data(topic=[])
-    lst = get_config(flag=True)
-    text = 'Выберите тематики, подходящие под ваш блог:'
-    markup = await topic_keyboard(lst)
-    await message.answer(text=text, reply_markup=markup)
-    await state.set_state(DZ.Topic.state)
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематики, подходящие под ваш блог:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(DZ.Topic.state)
+    else:
+        await number_wrong(message)
 
 
 async def dz_topic_choose(message: types.Message, state: FSMContext):
@@ -1337,24 +1361,27 @@ async def dz_description(message: types.Message, state: FSMContext):
 
 async def dz_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
-    await state.update_data(statistic=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-    sheet = spreadsheet.get_worksheet(4)  
-    num=len(sheet.col_values(1)) + 1
-    data = await state.get_data()
-    data = list(data.values())
-    cell_list = sheet.range(f'A{num}:AQ{num}')
-    cell_index = [0,1,2,3,4,5,6,8,18,20]
-    for i, val in enumerate(cell_index):
-        cell_list[val].value = data[i]
-    cell_list.pop(28)
-    cell_list.pop(21)
-    cell_list.pop(17)
-    sheet.update_cells(cell_list)
-    await state.finish()
-    await start(message)
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(4)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0,1,2,3,4,5,6,8,18,20]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(28)
+        cell_list.pop(21)
+        cell_list.pop(17)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message, number=False)
 
 
 #КОНТАКТЫ
