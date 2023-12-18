@@ -27,10 +27,10 @@ client = gspread.authorize(creds)
 # sheet = spreadsheet.get_worksheet(0)  # 0 refers to the first sheet
 
 
-async def number_wrong(message, number=True):
+async def number_wrong(message, number=True, text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'):
     text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
     if number == False:
-        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+        text=text2
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
@@ -147,7 +147,6 @@ async def work_know_from(message: types.Message, state: FSMContext):
     await state.set_state(Work.Link_resume.state)
 
 
-
 async def work_resume(message: types.Message, state: FSMContext):
     ''' Запоминает резюме, спрашивает кейсы'''
     if is_link(message.text) == True:
@@ -157,7 +156,7 @@ async def work_resume(message: types.Message, state: FSMContext):
         await message.answer(text, reply_markup=markup)
         await state.set_state(Work.Link_case.state)
     else:
-        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
         markup = await back_keyboard('Отменить регистрацию')
         await message.answer(text, reply_markup=markup)
 
@@ -240,7 +239,7 @@ async def barter_link(message: types.Message, state: FSMContext):
         await message.answer(text, reply_markup=markup)
         await state.set_state(Barter.Subs.state)
     else:
-        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https:******.***"'
+        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
         markup = await back_keyboard('Отменить регистрацию')
         await message.answer(text, reply_markup=markup)
 
@@ -461,7 +460,7 @@ async def inst_link(message: types.Message, state: FSMContext):
         await message.answer(text=text, reply_markup=markup)
         await state.set_state(Instagram.Topic.state)
     else:
-        await number_wrong(message, number=False)
+        await number_wrong(message, number=False, text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"')
 
 
 async def inst_topic_choose(message: types.Message, state: FSMContext):
