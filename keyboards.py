@@ -8,7 +8,7 @@ async def start_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Хочу быть блогером ЕРА', callback_data='bloger'),
         InlineKeyboardButton(text='Хочу работать в ЕРА', callback_data='work'),
-        InlineKeyboardButton(text='Сотрудничетсво', callback_data='collaboration'),
+        InlineKeyboardButton(text='Сотрудничество', callback_data='collaboration'),
         InlineKeyboardButton(text='Контакты', callback_data='contacts')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
@@ -19,7 +19,7 @@ async def start_keyboard() -> InlineKeyboardMarkup:
 async def colab_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Бартер', callback_data='barter'),
-        InlineKeyboardButton(text='Я мнеджер блогеров, хочу сотрудничать с ЕРА', callback_data='manager'),
+        InlineKeyboardButton(text='Я менеджер блогеров, хочу сотрудничать с ЕРА', callback_data='manager'),
         InlineKeyboardButton(text='Сотрудничетсво с ЕРА', callback_data='colab_start'),
         InlineKeyboardButton(text='Назад', callback_data='start')
     ]

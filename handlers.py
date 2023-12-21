@@ -188,7 +188,7 @@ async def collaboration(message: types.Message):
 
     ✏️Пройдя краткую регистрацию в разделе "Бартер", Вы сможете бесплатно посещать разного рода мероприятия.
 
-    ✏️Зарегистрировавшись как менеджер блогеров, мы получим от Вас информацию и свяжимся с Вами о сотрудничестве.
+    ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами о сотрудничестве, получив всю необходимую информацию
     
     ✏️ По иным вопросам сотрудничетсва, нажмите на кнопку "Сотрудничество с ЕРА".'''
     markup = await colab_keyboard()
@@ -313,7 +313,7 @@ async def manager_link(message: types.Message, state: FSMContext):
 async def manager_q(message: types.Message, state: FSMContext):
     ''' Запоминает вопрос, заканчивает регистрацию'''
     await state.update_data(q=message.text)
-    text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(2)  
@@ -375,7 +375,7 @@ async def colab_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер, заканчивает регистрацию'''
     if is_number(message.text) == True:
         await state.update_data(number=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_era_id)
         sheet = spreadsheet.get_worksheet(3)  
@@ -390,8 +390,8 @@ async def colab_number(message: types.Message, state: FSMContext):
 #НАЧАЛО ОПРОСА БЛОГЕР
 async def start_poll_bloger(message: types.Message, state: FSMContext):
     ''' Выбераем соцсеть для регистрации '''
-    text = '''Выберите медиаресурс со своим блогом
-    (после заполенения информации об одном, можно будет добавить другие ресурсы)'''
+    text = '''Выберите социальную сеть со своим блогом
+    (после заполенения информации об одном, можно будет добавить другие социальные сети)'''
     markup = await bloger_keyboard()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
@@ -515,7 +515,7 @@ async def inst_topic_choose_2(message: types.Message, state: FSMContext):
 async def inst_subs(message: types.Message, state: FSMContext):
     ''' Запоминает количество подписчиков и спрашивает опсиание блога'''
     await state.update_data(subs=message.text)
-    text = 'Краткое описание блога \n*Опишите что Вы как правило транслируете в блоге'
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
     await state.set_state(Instagram.Description.state)
@@ -581,7 +581,7 @@ async def inst_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(0)  
@@ -719,7 +719,7 @@ async def yt_topic_choose_2(message: types.Message, state: FSMContext):
 async def yt_subs(message: types.Message, state: FSMContext):
     ''' Запоминает количество подписчиков и спрашивает опсиание блога'''
     await state.update_data(subs=message.text)
-    text = 'Краткое описание блога \n*Опишите что Вы как правило транслируете в блоге'
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(YT.Description.state)
@@ -786,7 +786,7 @@ async def yt_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(1)  
@@ -872,7 +872,7 @@ async def vk_link(message: types.Message, state: FSMContext):
         await message.answer(text=text, reply_markup=markup)
         await state.set_state(VK.Topic.state)
     else:
-        await number_wrong(message)
+        await number_wrong(message, number=False)
 
 
 async def vk_topic_choose(message: types.Message, state: FSMContext):
@@ -927,7 +927,7 @@ async def vk_topic_choose_2(message: types.Message, state: FSMContext):
 async def vk_subs(message: types.Message, state: FSMContext):
     ''' Запоминает количество подписчиков и спрашивает опсиание блога'''
     await state.update_data(subs=message.text)
-    text = 'Краткое описание блога \n*Опишите что Вы как правило транслируете в блоге'
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(VK.Description.state)
@@ -993,7 +993,7 @@ async def vk_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(2)  
@@ -1163,8 +1163,7 @@ async def tg_post(message: types.Message, state: FSMContext):
 async def tg_country(message: types.Message, state: FSMContext):
     ''' Запоминает country и desc'''
     await state.update_data(stories_scope=message.text)
-    text = '''Краткое описание блога
-*Опишите что Вы как правило транслируете в блоге'''
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(TG.Description.state)
@@ -1184,7 +1183,7 @@ async def tg_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(3)  
@@ -1341,8 +1340,7 @@ async def dz_post_view(message: types.Message, state: FSMContext):
 async def dz_post(message: types.Message, state: FSMContext):
     ''' Запоминает post и desc'''
     await state.update_data(stories_scope=message.text)
-    text = '''Краткое описание блога
-*Опишите что Вы как правило транслируете в блоге'''
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(DZ.Description.state)
@@ -1362,7 +1360,7 @@ async def dz_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарю за интерес к сотрудничеству! С вами свяжуться  в ближайшее время '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(4)  

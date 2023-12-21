@@ -35,6 +35,7 @@ class Barter(StatesGroup):
     Number = State()
     Link = State()
     Subs = State()
+    Offer = State()
     City = State()
 
 
