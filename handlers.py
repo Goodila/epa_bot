@@ -173,7 +173,7 @@ async def work_case(message: types.Message, state: FSMContext):
 async def work_load(message: types.Message, state: FSMContext):
     ''' Запоминает load, заканчивает регистрацию'''
     await state.update_data(load=message.text)
-    text = '✅ Спасибо за заполнение анкеты, в скором времени с Вами свяжутся наши специалисты'
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(0)  
@@ -254,9 +254,18 @@ async def barter_subs(message: types.Message, state: FSMContext):
 
 
 async def barter_city(message: types.Message, state: FSMContext):
-    ''' Запоминает город, заканчивает регистрацию'''
+    ''' Запоминает город и спрашивает предложение'''
     await state.update_data(city=message.text)
-    text = '✅ Спасибо за заполнение анкеты, в скором времени с Вами свяжутся наши специалисты'
+    text = 'напишите Ваше предложение о сотрудничестве одним сообщением'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+    await state.set_state(Barter.Offer.state)
+
+
+async def barter_offer(message: types.Message, state: FSMContext):
+    ''' Запоминает offer, заканчивает регистрацию'''
+    await state.update_data(offer=message.text)
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(1)  
@@ -1433,6 +1442,8 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(barter_link, state=Barter.Link)
     dp.register_message_handler(barter_subs, state=Barter.Subs)
     dp.register_message_handler(barter_city, state=Barter.City)
+    dp.register_message_handler(barter_city, state=Barter.City)
+    dp.register_message_handler(barter_offer, state=Barter.Offer)
         #Менеджер
     dp.register_message_handler(manager_number, state=Manager.Number)
     dp.register_message_handler(manager_name, state=Manager.Name)
