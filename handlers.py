@@ -256,7 +256,7 @@ async def barter_subs(message: types.Message, state: FSMContext):
 async def barter_city(message: types.Message, state: FSMContext):
     ''' Запоминает город и спрашивает предложение'''
     await state.update_data(city=message.text)
-    text = 'напишите Ваше предложение о сотрудничестве одним сообщением'
+    text = 'Напишите Ваше предложение о сотрудничестве одним сообщением'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
     await state.set_state(Barter.Offer.state)
@@ -1395,12 +1395,11 @@ async def contacts(call: types.CallbackQuery):
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(4)
     val = sheet.get_all_values()
-    names = 'Список наших контактов для связи:'
-    for contact in val[1:]:
-        string = f'''Имя: {contact[0]}\nДолжность: {contact[1]}\nТелефон: {contact[2]}'''
-        names = names + '\n' + '\n' + string
+    text = ''
+    for string in val:
+        text = text + ((' '.join(string) + '\n') if string != [''] else '\n')
     markup = await back_keyboard('Назад')
-    await call.bot.send_message(call.from_user.id, text=names, reply_markup=markup)
+    await call.bot.send_message(call.from_user.id, text=text, reply_markup=markup)
 
 
 #РЕГИСТРАЦИЯ ХЕНДЛЕРОВ
