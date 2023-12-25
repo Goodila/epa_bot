@@ -3,7 +3,7 @@ from aiogram import types, Dispatcher, types
 from keyboards import start_keyboard, colab_keyboard, manager_keyboard, bloger_keyboard, number_keyboard
 from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard
 from aiogram.dispatcher import FSMContext
-from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ
+from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another
 from funcs import get_config, Bloger, is_link, is_number
 import time
 from asyncio import sleep
@@ -1390,6 +1390,183 @@ async def dz_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
+#НАЧАЛО ОПРОСА ДРУГОЕ
+async def start_poll_another(message: types.Message, state: FSMContext, flag = None):
+    ''' Начало опроса блогера another, Number '''
+    await state.set_state(Another.Number.state)
+    await state.update_data(username=message.from_user.username)
+    await state.update_data(user_id=message.from_user.id)
+    if Bloger(str(message.from_user.id)).check():
+        num = Bloger(str(message.from_user.id)).get()
+        text = f'Использовать номер {num}?'
+        markup = await number_keyboard()
+        await state.set_state(Another.Wait.state)
+    else:
+        #Запросить номер    
+        text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
+        markup = await back_keyboard('Отменить регистрацию')
+    if flag:
+        text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
+        markup =  types.ReplyKeyboardRemove()
+    await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
+
+
+async def another_number(call: types.CallbackQuery, state: FSMContext):
+    ''' Запоминает number и спрашивает Link'''
+    if (call.data if type(call) is types.CallbackQuery else call.text) == 'number_y':
+        await state.update_data(number=Bloger(f"{call.from_user.id}").get())
+        text = '''Ссылка на страницу Вашего блога'''
+    elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
+        await start_poll_another(call, state, flag = True)
+    else:
+        if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
+            await state.update_data(number=call.text)
+            Bloger(f"{call.from_user.id}").record(call.text)
+        else:
+            await number_wrong(call)
+            return
+    text = '''Ссылка на страницу Вашего блога'''
+    await call.answer(text=text)
+    await state.set_state(Another.Link.state)
+
+
+async def another_number_wait(message: types.Message, state: FSMContext):
+    if message.text == "Да✅":
+        await state.update_data(number=Bloger(f"{message.from_user.id}").get())
+        text = '''Ссылка на страницу Вашего блога'''
+    else: 
+        await start_poll_another(message, state, flag = True)
+        await state.set_state(Another.Number.state)
+        return
+    await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(Another.Link.state)
+
+
+async def another_link(message: types.Message, state: FSMContext):
+    ''' Запоминает ссылку на another и спрашивает тематику'''
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        await state.update_data(topic=[])
+        lst = get_config(flag=True)
+        text = 'Выберите тематики, подходящие под ваш блог:'
+        markup = await topic_keyboard(lst)
+        await message.answer(text=text, reply_markup=markup)
+        await state.set_state(Another.Topic.state)
+    else:
+        await number_wrong(message, number=False)
+
+
+async def another_topic_choose(message: types.Message, state: FSMContext):
+    ''' Обрабатывает выбор тематики another'''
+    if message.data.split('_')[1] == 'Другое (указать в примечании)':
+        text = 'Укажите тематику одним сообщением'
+        await state.set_state(Another.Topic_another.state)
+        await message.message.edit_text(text=text)
+        return
+    lst = await state.get_data()
+    lst = lst['topic']
+    lst.append(message.data.split('_')[1])
+    await state.update_data(topic=lst)
+    text = f'''Тематика: {message.data.split('_')[1]} добавлена!
+    желаете выбрать еще тематику?'''
+    markup = await topic_keyboard_2()
+    await message.message.edit_text(text=text, reply_markup=markup)
+
+
+async def another_topic_another(message: types.Message, state: FSMContext):
+    ''' Обрабатывает выбор тематики - другое'''
+    lst = await state.get_data()
+    lst = lst['topic']
+    lst.append(message.text)
+    await state.update_data(topic=lst)
+    text = f'''Тематика: {message.text} добавлена!
+    желаете выбрать еще тематику?'''
+    markup = await topic_keyboard_2()
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(Another.Topic.state)
+
+
+async def another_topic_choose_2(message: types.Message, state: FSMContext):
+    ''' обрабатывает клавиатуры выбора новой тематики ил закончить выбор '''
+    if message.data == 'topic_start':
+        lst = get_config(flag=True)
+        text = 'Выберите тематику Вашего контента:'
+        markup = await topic_keyboard(lst)
+        await message.message.edit_text(text=text, reply_markup=markup)
+        return
+    elif message.data == 'topic_end':
+        lst = await state.get_data()
+        lst = lst['topic']
+        lst = ', '.join(lst)
+        await state.update_data(topic=lst)
+        markup = await back_keyboard('Отменить регистрацию')
+    text = f'''Введите количество Ваших подписчиков'''
+    await message.message.edit_text(text=text, reply_markup=markup)
+    await state.set_state(Another.Subs.state)
+
+
+async def another_subs(message: types.Message, state: FSMContext):
+    ''' Запоминает количество подписчиков и post view'''
+    await state.update_data(subs=message.text)
+    text = 'Среднее количество просмотров публикации (пост, видео или другое)'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(Another.Post_views.state)
+
+
+async def another_post_view(message: types.Message, state: FSMContext):
+    ''' Запоминает post view и Post'''
+    await state.update_data(description=message.text)
+    text = 'Средняя стоимость размещения публикации'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(Another.Post.state)
+
+
+async def another_post(message: types.Message, state: FSMContext):
+    ''' Запоминает post и desc'''
+    await state.update_data(stories_scope=message.text)
+    text = 'Краткое описание блога \n*Опишите, что Вы транслируете в блоге'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(Another.Description.state)
+
+
+async def another_description(message: types.Message, state: FSMContext):
+    ''' Запоминает desc и спрашивает статистику '''
+    await state.update_data(stories=message.text)
+    text ='''Ссылка на статистику 
+*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''    
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(Another.Statistic.state)
+
+
+async def another_statistic(message: types.Message, state: FSMContext):
+    ''' Запоминает статистику, заканчивает регистрацию'''
+    if is_link(message.text) == True:
+        await state.update_data(statistic=message.text)
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        await message.answer(text=text)
+        spreadsheet = client.open_by_key(spreadsheet_bloger_id)
+        sheet = spreadsheet.get_worksheet(5)  
+        num=len(sheet.col_values(1)) + 1
+        data = await state.get_data()
+        data = list(data.values())
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0,1,2,3,4,5,6,8,18,20]
+        for i, val in enumerate(cell_index):
+            cell_list[val].value = data[i]
+        cell_list.pop(28)
+        cell_list.pop(21)
+        cell_list.pop(17)
+        sheet.update_cells(cell_list)
+        await state.finish()
+        await start_again(message)
+    else:
+        await number_wrong(message, number=False)
+
+
 #КОНТАКТЫ
 async def contacts(call: types.CallbackQuery):
     spreadsheet = client.open_by_key(spreadsheet_era_id)
@@ -1423,6 +1600,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(start_poll_vk, text='VK')
     dp.register_callback_query_handler(start_poll_tg, text='TG')
     dp.register_callback_query_handler(start_poll_dz, text='Дзен')
+    dp.register_callback_query_handler(start_poll_another, text='Другое')
     dp.register_callback_query_handler(back_start, state='*', text='start')
     #States
         #Хочу работать в ЕРА
@@ -1524,6 +1702,18 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(dz_post, state=DZ.Post)
     dp.register_message_handler(dz_description, state=DZ.Description)
     dp.register_message_handler(dz_statistic, state=DZ.Statistic)
+        #Another
+    dp.register_message_handler(another_number, state=Another.Number)
+    dp.register_message_handler(another_number_wait, state=Another.Wait)
+    dp.register_message_handler(another_link, state=Another.Link)
+    dp.register_callback_query_handler(another_topic_choose, state=Another.Topic, text_startswith='Topic')
+    dp.register_callback_query_handler(another_topic_choose_2, state=Another.Topic, text_startswith='topic')
+    dp.register_message_handler(another_topic_another, state=Another.Topic_another)
+    dp.register_message_handler(another_subs, state=Another.Subs)
+    dp.register_message_handler(another_post_view, state=Another.Post_views)
+    dp.register_message_handler(another_post, state=Another.Post)
+    dp.register_message_handler(another_description, state=Another.Description)
+    dp.register_message_handler(another_statistic, state=Another.Statistic)
         #Контакты
     dp.register_callback_query_handler(contacts, text_startswith='contacts')
 

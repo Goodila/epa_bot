@@ -20,7 +20,7 @@ async def colab_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Бартер', callback_data='barter'),
         InlineKeyboardButton(text='Я менеджер блогеров', callback_data='manager'),
-        InlineKeyboardButton(text='Сотрудничетсво с ЕРА', callback_data='colab_start'),
+        InlineKeyboardButton(text='Сотрудничество с ЕРА', callback_data='colab_start'),
         InlineKeyboardButton(text='Назад', callback_data='start')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
@@ -45,6 +45,7 @@ async def bloger_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text='VK', callback_data='VK'),
         InlineKeyboardButton(text='Telegram', callback_data='TG'),
         InlineKeyboardButton(text='Дзен', callback_data='Дзен'),
+        InlineKeyboardButton(text='Другое', callback_data='Другое'),
         InlineKeyboardButton(text='Назад', callback_data='start')
     ]
     markup = InlineKeyboardMarkup(row_width=1)

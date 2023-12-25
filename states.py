@@ -128,4 +128,17 @@ class DZ(StatesGroup):
     Post = State()
     Description = State()
     Statistic = State()
+
+
+class Another(StatesGroup):
+    Number = State()
+    Wait = State()
+    Link = State()
+    Topic = State()
+    Topic_another = State()
+    Subs = State()
+    Post_views = State()
+    Post = State()
+    Description = State()
+    Statistic = State()
     
