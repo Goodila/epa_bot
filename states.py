@@ -43,6 +43,8 @@ class Manager(StatesGroup):
     Number = State()
     Name = State()
     Link = State()
+    Exclusive = State()
+    Exclusive_links = State()
     Q = State()
     
 
@@ -95,6 +97,7 @@ class VK(StatesGroup):
     Topic_another = State()
     Subs = State()
     Description = State()
+    Question_shotrs = State()
     Country = State()
     Post = State()
     Post_views = State()
