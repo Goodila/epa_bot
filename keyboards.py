@@ -83,6 +83,16 @@ async def topic_keyboard_2() -> InlineKeyboardMarkup:
     return markup
 
 
+async def reels_keyboard(media) -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Да ✅', callback_data='reels_yes_{media}'),
+        InlineKeyboardButton(text='Нет ❌', callback_data='reels_no_{media}')
+    ]
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup.add(*buttons)
+    return markup
+
+
 async def back_keyboard(string) -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text=f'{string}', callback_data='start'),

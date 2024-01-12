@@ -173,7 +173,7 @@ async def work_case(message: types.Message, state: FSMContext):
 async def work_load(message: types.Message, state: FSMContext):
     ''' Запоминает load, заканчивает регистрацию'''
     await state.update_data(load=message.text)
-    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(0)  
@@ -188,7 +188,7 @@ async def collaboration(message: types.Message):
 
     ✏️Пройдя краткую регистрацию в разделе "Бартер", Вы сможете бесплатно посещать разного рода мероприятия.
 
-    ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами о сотрудничестве, получив всю необходимую информацию
+    ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами для сотрудничества, получив всю необходимую информацию
     
     ✏️ По иным вопросам сотрудничетсва, нажмите на кнопку "Сотрудничество с ЕРА".'''
     markup = await colab_keyboard()
@@ -265,7 +265,7 @@ async def barter_city(message: types.Message, state: FSMContext):
 async def barter_offer(message: types.Message, state: FSMContext):
     ''' Запоминает offer, заканчивает регистрацию'''
     await state.update_data(offer=message.text)
-    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(1)  
@@ -322,7 +322,7 @@ async def manager_link(message: types.Message, state: FSMContext):
 async def manager_q(message: types.Message, state: FSMContext):
     ''' Запоминает вопрос, заканчивает регистрацию'''
     await state.update_data(q=message.text)
-    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
     spreadsheet = client.open_by_key(spreadsheet_era_id)
     sheet = spreadsheet.get_worksheet(2)  
@@ -384,7 +384,7 @@ async def colab_number(message: types.Message, state: FSMContext):
     ''' Запоминает номер, заканчивает регистрацию'''
     if is_number(message.text) == True:
         await state.update_data(number=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_era_id)
         sheet = spreadsheet.get_worksheet(3)  
@@ -484,7 +484,7 @@ async def inst_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -561,7 +561,7 @@ async def inst_stories(message: types.Message, state: FSMContext):
 async def inst_stories_scope(message: types.Message, state: FSMContext):
     ''' Запоминает охват сторис и спрашивает цену рилс'''
     await state.update_data(stories_scope=message.text)
-    text = '''Средняя стоимость Рилс в профиле'''
+    text = '''Средняя стоимость рилс в профиле'''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
     await state.set_state(Instagram.Reels.state)
@@ -590,7 +590,7 @@ async def inst_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(0)  
@@ -688,7 +688,7 @@ async def yt_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -700,7 +700,7 @@ async def yt_topic_another(message: types.Message, state: FSMContext):
     lst.append(message.text)
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(YT.Topic.state)
@@ -746,8 +746,7 @@ async def yt_descroption(message: types.Message, state: FSMContext):
 async def yt_country(message: types.Message, state: FSMContext):
     ''' Запоминает country и спрашивает цену shorts'''
     await state.update_data(city=message.text)
-    text = '''Стоимость размещения Shorts
-*Если не используете данный формат, впишите "нет"'''
+    text = '''Стоимость размещения Shorts'''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(YT.Shorts.state)
@@ -795,7 +794,7 @@ async def yt_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(1)  
@@ -896,7 +895,7 @@ async def vk_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -908,7 +907,7 @@ async def vk_topic_another(message: types.Message, state: FSMContext):
     lst.append(message.text)
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(VK.Topic.state)
@@ -1002,7 +1001,7 @@ async def vk_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(2)  
@@ -1105,7 +1104,7 @@ async def tg_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -1117,7 +1116,7 @@ async def tg_topic_another(message: types.Message, state: FSMContext):
     lst.append(message.text)
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(TG.Topic.state)
@@ -1192,7 +1191,7 @@ async def tg_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(3)  
@@ -1291,7 +1290,7 @@ async def dz_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -1303,7 +1302,7 @@ async def dz_topic_another(message: types.Message, state: FSMContext):
     lst.append(message.text)
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(DZ.Topic.state)
@@ -1369,7 +1368,7 @@ async def dz_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(4)  
@@ -1468,7 +1467,7 @@ async def another_topic_choose(message: types.Message, state: FSMContext):
     lst.append(message.data.split('_')[1])
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.data.split('_')[1]} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.message.edit_text(text=text, reply_markup=markup)
 
@@ -1480,7 +1479,7 @@ async def another_topic_another(message: types.Message, state: FSMContext):
     lst.append(message.text)
     await state.update_data(topic=lst)
     text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+Желаете выбрать еще тематику?'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(Another.Topic.state)
@@ -1546,7 +1545,7 @@ async def another_statistic(message: types.Message, state: FSMContext):
     ''' Запоминает статистику, заканчивает регистрацию'''
     if is_link(message.text) == True:
         await state.update_data(statistic=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжуться в ближайшее время наши специалисты '
+        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
         sheet = spreadsheet.get_worksheet(5)  
