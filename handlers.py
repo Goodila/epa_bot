@@ -308,15 +308,42 @@ async def manager_name(message: types.Message, state: FSMContext):
 
 
 async def manager_link(message: types.Message, state: FSMContext):
-    ''' Запоминает ссылку на список блогеров и спрашивает последний вопрос'''
+    ''' Запоминает ссылку на список блогеров и справшивает exclusive'''
     if is_link(message.text) == True:
         await state.update_data(link=message.text)
-        text = 'Помимо предоставления своих блогеров для рекламных интеграций, заинтересованы ли вы также в подборе блогеров под конкретный рекламный запрос?'
-        markup = await manager_keyboard()
+        text = 'Есть ли блогеры у Вас на эксклюзивном сотрудничестве и/или те у кого вы вы непосредственно PR.'
+        markup = await reels_keyboard('M')
         await message.answer(text=text, reply_markup=markup)
-        await state.set_state(Manager.Q.state)
+        await state.set_state(Manager.Exclusive.state)
     else:
         await number_wrong(message, number=False)
+
+
+async def manager_exclusive(message: types.Message, state: FSMContext):
+    ''' Запоминает exclusive, - if else'''
+    data = message.data
+    data = data.split('_')
+    if data[1] == "yes":
+        text = "Пришлите ссылки на этих блогеров одним сообщением"    
+        await state.set_state(Manager.Exclusive_links.state)
+    if data[1] == "no":
+        await state.update_data(exclusive="Нет")
+        text = 'Помимо предоставления своих блогеров для рекламных интеграций, заинтересованы ли вы также в подборе блогеров под конкретный рекламный запрос?'
+        await state.set_state(Manager.Q.state)
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.message.answer(text, reply_markup=markup)
+
+
+async def manager_exclusive_links(message: types.Message, state: FSMContext):
+    ''' Запоминает exclusive_links задает последний вопрос'''
+    data = '  ___  '.join(message.text.split())
+    await message.answer(data)
+
+    await state.update_data(exclusive=data)
+    text = 'Помимо предоставления своих блогеров для рекламных интеграций, заинтересованы ли вы также в подборе блогеров под конкретный рекламный запрос?'
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+    await state.set_state(Manager.Q.state)
 
 
 async def manager_q(message: types.Message, state: FSMContext):
@@ -755,7 +782,6 @@ async def yt_country(message: types.Message, state: FSMContext):
 async def yt_questions_shorts(message: types.Message, state: FSMContext):
     ''' Запоминает questions_shorts и pass'''
     data = message.data.split("_")
-    text = '''Размещаете ли Вы контент в формате Shorts?'''
     if data[1] == 'yes':
         text = "Укажите стоимость размещения Shorts"
         await state.set_state(YT.Shorts.state)
@@ -773,7 +799,7 @@ async def yt_questions_shorts(message: types.Message, state: FSMContext):
 async def yt_shorts(message: types.Message, state: FSMContext):
     ''' Запоминает цену shorts и спрашивает охват shorts'''
     await state.update_data(stories=message.text)
-    text = '''Укажите средние просмотры шортс'''
+    text = '''Укажите средние просмотры Shorts'''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(YT.Shorts_views.state)
@@ -989,11 +1015,27 @@ async def vk_post_views(message: types.Message, state: FSMContext):
 async def vk_post(message: types.Message, state: FSMContext):
     ''' Запоминает цену post и спрашивает просмотры клипов '''
     await state.update_data(stories=message.text)
-    text = '''Среднее количество просмотров VK - клипов
-*Если не публикуете данный формат, впишите "нет"'''
-    markup = await back_keyboard('Отменить регистрацию')
+    text = '''Укажите, публикуете ли вы контент в формате VK клипов?'''
+    markup = await reels_keyboard('VK')
     await message.answer(text=text, reply_markup=markup)
-    await state.set_state(VK.Clip_views.state)
+    await state.set_state(VK.Question_shotrs.state)
+
+
+async def vk_questions_clips(message: types.Message, state: FSMContext):
+    ''' Запоминает questions_clips и спрашивает pass '''
+    data = message.data.split("_")
+    if data[1] == 'yes':
+        text = "Укажите среднее количество просмотров VK - клипов"
+        await state.set_state(VK.Clip_views.state)
+    if data[1] == 'no':
+        await state.update_data(reels="не размещает")
+        await state.update_data(reels_scope="не размещает")
+        text = '''Ссылка на статистику 
+*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''
+        await state.set_state(VK.Statistic.state)
+
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.message.answer(text=text, reply_markup=markup)
 
 
 async def vk_clip_views(message: types.Message, state: FSMContext):
@@ -1642,6 +1684,8 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(manager_number, state=Manager.Number)
     dp.register_message_handler(manager_name, state=Manager.Name)
     dp.register_message_handler(manager_link, state=Manager.Link)
+    dp.register_callback_query_handler(manager_exclusive, state=Manager.Exclusive)
+    dp.register_message_handler(manager_exclusive_links, state=Manager.Exclusive_links)
     dp.register_message_handler(manager_q, state=Manager.Q)
         #Сотрудничество
     dp.register_message_handler(colab_name, state=Colab.Name)
@@ -1690,6 +1734,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(vk_subs, state=VK.Subs)
     dp.register_message_handler(vk_descroption, state=VK.Description)
     dp.register_message_handler(vk_country, state=VK.Country)
+    dp.register_callback_query_handler(vk_questions_clips, state=VK.Question_shotrs)
     dp.register_message_handler(vk_post, state=VK.Post)
     dp.register_message_handler(vk_post_views, state=VK.Post_views)
     dp.register_message_handler(vk_clip, state=VK.Clip)
