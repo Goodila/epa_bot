@@ -78,6 +78,7 @@ class YT(StatesGroup):
     Topic_another = State()
     Subs = State()
     Description = State()
+    Question_shotrs = State()
     Country = State()
     Shorts = State()
     Shorts_views = State()

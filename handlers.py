@@ -1,7 +1,7 @@
 import os
 from aiogram import types, Dispatcher, types
 from keyboards import start_keyboard, colab_keyboard, manager_keyboard, bloger_keyboard, number_keyboard
-from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard
+from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, reels_keyboard
 from aiogram.dispatcher import FSMContext
 from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another
 from funcs import get_config, Bloger, is_link, is_number
@@ -746,10 +746,28 @@ async def yt_descroption(message: types.Message, state: FSMContext):
 async def yt_country(message: types.Message, state: FSMContext):
     ''' Запоминает country и спрашивает цену shorts'''
     await state.update_data(city=message.text)
-    text = '''Стоимость размещения Shorts'''
-    markup = await back_keyboard('Отменить регистрацию')
+    text = '''Размещаете ли Вы контент в формате Shorts?'''
+    markup = await reels_keyboard('YT')
     await message.answer(text=text, reply_markup=markup)
-    await state.set_state(YT.Shorts.state)
+    await state.set_state(YT.Question_shotrs.state)
+
+
+async def yt_questions_shorts(message: types.Message, state: FSMContext):
+    ''' Запоминает questions_shorts и pass'''
+    data = message.data.split("_")
+    text = '''Размещаете ли Вы контент в формате Shorts?'''
+    if data[1] == 'yes':
+        text = "Укажите стоимость размещения Shorts"
+        await state.set_state(YT.Shorts.state)
+    if data[1] == 'no':
+        await state.update_data(stories="не размещает")
+        await state.update_data(stories_scope="не размещает")
+        text = '''Стоимость размещения интеграции
+*Мы понимаем, что стоимость будет варьироваться в зависимости от запроса, поэтому просим указать среднюю стоимость.''' 
+        await state.set_state(YT.Video.state)
+
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.message.answer(text=text, reply_markup=markup)
 
 
 async def yt_shorts(message: types.Message, state: FSMContext):
@@ -1656,6 +1674,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(yt_subs, state=YT.Subs)
     dp.register_message_handler(yt_descroption, state=YT.Description)
     dp.register_message_handler(yt_country, state=YT.Country)
+    dp.register_callback_query_handler(yt_questions_shorts, state=YT.Question_shotrs)
     dp.register_message_handler(yt_shorts, state=YT.Shorts)
     dp.register_message_handler(yt_shorts_views, state=YT.Shorts_views)
     dp.register_message_handler(yt_video, state=YT.Video)

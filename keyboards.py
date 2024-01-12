@@ -85,11 +85,12 @@ async def topic_keyboard_2() -> InlineKeyboardMarkup:
 
 async def reels_keyboard(media) -> InlineKeyboardMarkup:
     buttons = [
-        InlineKeyboardButton(text='Да ✅', callback_data='reels_yes_{media}'),
-        InlineKeyboardButton(text='Нет ❌', callback_data='reels_no_{media}')
+        InlineKeyboardButton(text='Да ✅', callback_data=f'reels_yes_{media}'),
+        InlineKeyboardButton(text='Нет ❌', callback_data=f'reels_no_{media}')
     ]
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup = InlineKeyboardMarkup(resize_keyboard=True, row_width=2)
     markup.add(*buttons)
+    markup.add(InlineKeyboardButton(text=f'Отменить регистрацию', callback_data='start'))
     return markup
 
 
