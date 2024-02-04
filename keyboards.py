@@ -1,31 +1,32 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.callback_data import CallbackData
 
-EventsCallback = CallbackData('event', 'action', 'id')
-
 
 async def start_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-        InlineKeyboardButton(text='Хочу быть блогером ЕРА', callback_data='bloger'),
+        InlineKeyboardButton(text='Хочу попасть в базу ЕРА', callback_data='bloger'),
+        InlineKeyboardButton(text='Менеджер блогеров / агенство', callback_data='manager'),
         InlineKeyboardButton(text='Хочу работать в ЕРА', callback_data='work'),
-        InlineKeyboardButton(text='Сотрудничество', callback_data='collaboration'),
+        InlineKeyboardButton(text='Influence-GR', callback_data='barter'),
+        InlineKeyboardButton(text='Сотрудничество', callback_data='colab_start'),
+        InlineKeyboardButton(text='Эксклюзивный контракт', callback_data='exclusive_conract'),
         InlineKeyboardButton(text='Контакты', callback_data='contacts')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)
     return markup
 
-
-async def colab_keyboard() -> InlineKeyboardMarkup:
-    buttons = [
-        InlineKeyboardButton(text='Бартер', callback_data='barter'),
-        InlineKeyboardButton(text='Я менеджер блогеров', callback_data='manager'),
-        InlineKeyboardButton(text='Сотрудничество с ЕРА', callback_data='colab_start'),
-        InlineKeyboardButton(text='Назад', callback_data='start')
-    ]
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(*buttons)
-    return markup
+# ВОЗМОЖНО НЕ ПРИГОДИТСЯ (СТАРАЯ КЛАВА ДЛЯ СОТРУДНЧЕСТВА)
+# async def colab_keyboard() -> InlineKeyboardMarkup:
+#     buttons = [
+#         InlineKeyboardButton(text='Бартер', callback_data='barter'),
+#         InlineKeyboardButton(text='Я менеджер блогеров', callback_data='manager'),
+#         InlineKeyboardButton(text='Сотрудничество с ЕРА', callback_data='colab_start'),
+#         InlineKeyboardButton(text='Назад', callback_data='start')
+#     ]
+#     markup = InlineKeyboardMarkup(row_width=1)
+#     markup.add(*buttons)
+#     return markup
 
 
 async def manager_keyboard() -> ReplyKeyboardMarkup:
@@ -64,10 +65,9 @@ async def number_keyboard() -> ReplyKeyboardMarkup:
 
 
 async def topic_keyboard(lst) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup(row_width=1)
-    for i in lst:
-        button = InlineKeyboardButton(text=i, callback_data=f'Topic_{i}')
-        markup.add(button)
+    markup = InlineKeyboardMarkup(row_width=2)
+    buttons = [InlineKeyboardButton(text=i, callback_data=f'Topic_{i}') for i in lst]
+    markup.add(*buttons)
     button = InlineKeyboardButton(text="✅Закончить выбор", callback_data='topic_end')
     markup.add(button)
     return markup
@@ -77,6 +77,16 @@ async def topic_keyboard_2() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Выбрать еще категорию', callback_data='topic_start'),
         InlineKeyboardButton(text='✅Закончить выбор', callback_data='topic_end'),
+    ]
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(*buttons)
+    return markup
+
+
+async def registr_end() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Добавить еще одну социальную сеть', callback_data='bloger'),
+        InlineKeyboardButton(text='Завершить регистрацию', callback_data='start'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)

@@ -1,8 +1,9 @@
 import os
 from aiogram import types, Dispatcher, types
-from keyboards import start_keyboard, colab_keyboard, manager_keyboard, bloger_keyboard, number_keyboard
+from keyboards import start_keyboard, manager_keyboard, bloger_keyboard, number_keyboard, registr_end
 from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, reels_keyboard
 from aiogram.dispatcher import FSMContext
+from states import SocMedia
 from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another
 from funcs import get_config, Bloger, is_link, is_number
 import time
@@ -36,17 +37,26 @@ async def number_wrong(message, number=True, text2='К сожалению, Вы 
 
 
 async def start(message: types.Message):
-    text = '''Приветствую! На связи бот Единого Рекламного Агентства ЕРА ✌🏻
+    text = '''Приветствую! На связи Единое Рекламное Агентство ЕРА ✌🏻Жми:
 
-С моей помощью Вы можете: 
-✏️ заполнить данные, чтобы попасть в базу блогеров ЕРА и получать рекламные предложения
-✏️ подать анкету , если хотите работать у нас в компании
+<b>Хочу попасть в базу ЕРА</b>
+✏️ Если ты блогер и хочешь попасть к нам в базу, чтобы получать рекламные/коммерческие и другие интересные предложения.
 
-В разделе сотрудничество:
-✏️ заполнить заявку на сотрудничество если ты менеджер блогеров
-✏️ заполнить заявку-предложение о сотрудничестве с ЕРА
-✏️ заполнить заявку на получение уведомлений о бесплатных PR-событиях и мероприятиях  для блогеров
+Менеджер блогеров / агентство 
+✏️Если у тебя есть блогеры/influence-агенство. Мы с радостью интегрируем тебя и твоих блогеров ко входящим рекламным запросам наших клиентов.
 
+<b>Хочу работать в ЕРА</b>
+✏️Если хочешь стать частью
+Нашей большой команды. Мы найдем место для всех😉 
+
+<b>Influence-GR</b>
+✏️ Если хочешь получать  уведомления о бесплатных PR-событиях и мероприятиях и спец. проектах для паблишеров.
+
+<b>Сотрудничество </b>
+✏️Мы «за» сотрудничество, партнерство и участие в интересных проектах. Пиши, возможно, твое предложение актуально нам как никогда😉 
+
+<b>Эксклюзивный контракт</b> 
+✏️Приоритет во всех проектах безусловно отдается резидентам агентства. Прочитай информацию о том, как им можно стать.
 '''
     markup = await start_keyboard()
     if isinstance(message, types.Message):
@@ -74,7 +84,173 @@ async def help(message: types.Message):
 
 async def me(message: types.Message):
     print(message)
-    
+
+
+async def start_soc_media(message: types.Message, state: FSMContext):
+    """Начало опроса (хочу попасть в ера)"""
+    await state.set_state(SocMedia.Name.state)
+    await state.update_data(username=message.from_user.username)
+    await state.update_data(user_id=message.from_user.id)
+    text = '''Ну что ж, приступим к добавлению. Это займет у Вас не более 2-3 минут😉
+
+Как я могу к Вам обращаться?'''
+    markup = await back_keyboard('Назад')
+    await message.message.edit_text(text, reply_markup=markup)
+
+
+async def soc_media_name(message: types.Message, state: FSMContext):
+    """Запоминает имя, спрашивает основную соцсеть"""
+    await state.update_data(name=message.text)
+    data = await state.get_data()
+    name = data['name']
+    text = f'''<u>Вопрос 1 из 6</u>
+{name}, какая у Вас основная социальная сеть?'''
+    await state.set_state(SocMedia.SM.state)
+    markup = await bloger_keyboard()
+    await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_sm(call: types.CallbackQuery, state: FSMContext):
+    """Запоминает осн.соцсеть, спраш. ссылку на соц.с."""
+    await state.update_data(SM=call.data)
+    text = '''Скопируйте и вставьте прямую кликабельную ссылку на Вашу основную социальную сеть.'''
+    await state.set_state(SocMedia.Link.state)
+    markup = await back_keyboard('Отмена регистрации')
+    await call.message.answer(text, reply_markup=markup)
+
+
+async def soc_media_link(message: types.Message, state: FSMContext):
+    """Запоминает осн.соцсеть, спраш. подписч"""
+    if is_link(message.text) == True:
+        await state.update_data(link=message.text)
+        text = '''<u>Вопрос 2 из 6</u>
+Количество подписчиков?
+(Полным числом, с пробелами, без сокращений, пример: 1 220 000)'''
+        await state.set_state(SocMedia.Subs.state)
+        markup = await back_keyboard('Отмена регистрации')
+        await message.answer(text, reply_markup=markup)
+    else:
+        text = '*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.'
+        markup = await back_keyboard('Отменить регистрацию')
+        await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_subs(message: types.Message, state: FSMContext):
+    """Запоминает subs, спрашивает city"""
+    await state.update_data(subs=message.text)
+    text = f'''<u>Вопрос 3 из 6</u>
+Город Вашего постоянного проживания?'''
+    await state.set_state(SocMedia.City.state)
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_city(message: types.Message, state: FSMContext):
+    """Запоминает city, спрашивает geo1"""
+    await state.update_data(city=message.text)
+    text = f'''<u>Вопрос 4 из 6</u>
+Основное ГЕО Ваших подписчиков?
+<em>(Укажите Страну)</em>'''
+    await state.set_state(SocMedia.Geo1.state)
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_geo1(message: types.Message, state: FSMContext):
+    """Запоминает geo1, спрашивает geo2"""
+    await state.update_data(geo1=message.text)
+    text = f'''<u>Вопрос 4 из 6</u>
+Основное ГЕО Ваших подписчиков?
+<em>(Укажите город)</em>'''
+    await state.set_state(SocMedia.Geo2.state)
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_geo2(message: types.Message, state: FSMContext):
+    """Запоминает geo2, спрашивает тематику"""
+    await state.update_data(geo2=message.text)
+    await state.update_data(topic=[])
+    text = f'''<u>Вопрос 5 из 6</u>
+Укажите тематику Вашего блога?'''
+    lst = get_config(flag=True)
+    await state.set_state(SocMedia.Topic.state)
+    markup = await topic_keyboard(lst)
+    await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_topic(call: types.CallbackQuery, state: FSMContext):
+    """Обрабатывает выбор тематики"""
+    if call.data.split('_')[1] == 'Другое (указать в примечании)':
+        text = 'Укажите тематику одним сообщением'
+        await state.set_state(SocMedia.Topic_another.state)
+        await call.message.edit_text(text=text)
+        return
+    lst = await state.get_data()
+    lst = lst['topic']
+    lst.append(call.data.split('_')[1])
+    await state.update_data(topic=lst)
+    text = f'''Тематика: {call.data.split('_')[1]} добавлена!
+    Желаете выбрать еще тематику?'''
+    markup = await topic_keyboard_2()
+    await call.message.edit_text(text=text, reply_markup=markup)
+
+
+async def soc_media_topic_2(call: types.CallbackQuery, state: FSMContext):
+    """обрабатывает клавиатуры выбора новой тематики ил закончить выбор"""
+    if call.data == 'topic_start':
+        lst = get_config(flag=True)
+        text = 'Выберите тематику Вашего контента:'
+        markup = await topic_keyboard(lst)
+        await call.message.edit_text(text=text, reply_markup=markup)
+        return
+    elif call.data == 'topic_end':
+        lst = await state.get_data()
+        name = lst['name']
+        lst = lst['topic']
+        lst = ', '.join(lst)
+        await state.update_data(topic=lst)
+        markup = await back_keyboard('Отменить регистрацию')
+    text = f'''<em>Вопрос 6 из 6</em>
+{name}, кратко опишите о чем Ваш блог, что вы транслируете?'''
+    await call.message.edit_text(text=text, reply_markup=markup)
+    await state.set_state(SocMedia.Description.state)
+
+
+async def soc_media_topic_another(message: types.Message, state: FSMContext):
+    ''' Обрабатывает выбор тематики - другое'''
+    lst = await state.get_data()
+    lst = lst['topic']
+    lst.append(message.text)
+    await state.update_data(topic=lst)
+    text = f'''Тематика: {message.text} добавлена!
+    желаете выбрать еще тематику?'''
+    markup = await topic_keyboard_2()
+    await message.answer(text=text, reply_markup=markup)
+    await state.set_state(SocMedia.Topic.state)
+
+
+async def soc_media_description(message: types.Message, state: FSMContext):
+    """Заканчивает процесс регистрации"""
+    await state.update_data(desc=message.text)
+    lst = await state.get_data()
+    text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
+
+Ожидайте ответного сообщения в Telegram от сотрудника ЕРА\n\n''' + ' | '.join(list(map(str, lst.values())))
+    markup = await registr_end()
+    await message.answer(text=text, reply_markup=markup)
+    await state.finish()
+
+
+# async def k(message: types.Message, state: FSMContext):
+#     text = f'''<u>Вопрос 5 из 6</u>
+# Укажите тематику Вашего блога?'''
+#     lst = get_config(flag=True)
+#     await state.set_state(SocMedia.Topic.state)
+#     markup = await topic_keyboard(lst)
+#     await message.answer(text, reply_markup=markup)
+
+
 
 async def start_poll_work(message: types.Message, state: FSMContext):
     ''' Начало опроса по анкете на работу, номер телефона '''
@@ -183,16 +359,16 @@ async def work_load(message: types.Message, state: FSMContext):
     await start_again(message)
 
 
-async def collaboration(message: types.Message):
-    text = '''Приветствую Вас в разделе "Сотрудничество"
-
-    ✏️Пройдя краткую регистрацию в разделе "Бартер", Вы сможете бесплатно посещать разного рода мероприятия.
-
-    ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами для сотрудничества, получив всю необходимую информацию
-    
-    ✏️ По иным вопросам сотрудничетсва, нажмите на кнопку "Сотрудничество с ЕРА".'''
-    markup = await colab_keyboard()
-    await message.bot.send_message(chat_id=message.from_user.id, text=text, reply_markup=markup)
+# async def collaboration(message: types.Message):
+#     text = '''Приветствую Вас в разделе "Сотрудничество"
+#
+#     ✏️Пройдя краткую регистрацию в разделе "Бартер", Вы сможете бесплатно посещать разного рода мероприятия.
+#
+#     ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами для сотрудничества, получив всю необходимую информацию
+#
+#     ✏️ По иным вопросам сотрудничетсва, нажмите на кнопку "Сотрудничество с ЕРА".'''
+#     markup = await colab_keyboard()
+#     await message.bot.send_message(chat_id=message.from_user.id, text=text, reply_markup=markup)
 
 
 #НАЧАЛО ОПРОСА БАРТЕР
@@ -311,7 +487,7 @@ async def manager_link(message: types.Message, state: FSMContext):
     ''' Запоминает ссылку на список блогеров и справшивает exclusive'''
     if is_link(message.text) == True:
         await state.update_data(link=message.text)
-        text = 'Есть ли блогеры у Вас на эксклюзивном сотрудничестве и/или те у кого вы вы непосредственно PR.'
+        text = 'Есть ли блогеры у Вас на эксклюзивном сотрудничестве и/или те у кого Вы непосредственно PR.'
         markup = await reels_keyboard('M')
         await message.answer(text=text, reply_markup=markup)
         await state.set_state(Manager.Exclusive.state)
@@ -1628,32 +1804,50 @@ async def another_statistic(message: types.Message, state: FSMContext):
 
 #КОНТАКТЫ
 async def contacts(call: types.CallbackQuery):
-    spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(4)
-    val = sheet.get_all_values()
-    text = ''
-    for string in val:
-        text = text + ((' '.join(string) + '\n') if string != [''] else '\n')
+    text = '''Telegram: @era_agency_info
+Самый оперативный способ связи  
+
+Сайт: bloggers.era-agency.ru
+E-mail: info@era-agency.ru
+
+График работы: 
+Понедельник - Пятница / 10:00 - 19:00
+
+По срочным запросам вне графика работы:
+Телефон: +7 (993) 338-78-28'''
     markup = await back_keyboard('Назад')
     await call.bot.send_message(call.from_user.id, text=text, reply_markup=markup)
 
 
 #РЕГИСТРАЦИЯ ХЕНДЛЕРОВ
 def registration_handlers(dp: Dispatcher):
+    #NEW ONES
+    # хочу попасть в ЕРА
+    dp.register_message_handler(soc_media_name, state=SocMedia.Name)
+    dp.register_callback_query_handler(soc_media_sm, state=SocMedia.SM)
+    dp.register_message_handler(soc_media_link, state=SocMedia.Link)
+    dp.register_message_handler(soc_media_subs, state=SocMedia.Subs)
+    dp.register_message_handler(soc_media_city, state=SocMedia.City)
+    dp.register_message_handler(soc_media_geo1, state=SocMedia.Geo1)
+    dp.register_message_handler(soc_media_geo2, state=SocMedia.Geo2)
+    dp.register_callback_query_handler(soc_media_topic, state=SocMedia.Topic, text_startswith='Topic')
+    dp.register_callback_query_handler(soc_media_topic_2, state=SocMedia.Topic, text_startswith='topic')
+    dp.register_message_handler(soc_media_topic_another, state=SocMedia.Topic_another)
+    dp.register_message_handler(soc_media_description, state=SocMedia.Description)
+
+
     #Commands
     dp.register_message_handler(start, commands=['start'])
-    dp.register_message_handler(help, commands=['help'])
     dp.register_message_handler(start, text=['старт'])
-    dp.register_message_handler(me, text=['me'])
-    dp.register_message_handler(start_poll_col, text=['col'])
+    # dp.register_message_handler(k, commands=['k'])
     #Callbacks
     dp.register_callback_query_handler(start_poll_col, text='colab_start')
     dp.register_callback_query_handler(start_poll_work, text='work')
     dp.register_callback_query_handler(start, text='start')
-    dp.register_callback_query_handler(collaboration, text='collaboration')
+    # dp.register_callback_query_handler(collaboration, text='collaboration')
     dp.register_callback_query_handler(start_poll_barter, text='barter')
     dp.register_callback_query_handler(start_poll_manager, text='manager')
-    dp.register_callback_query_handler(start_poll_bloger, text='bloger')
+    dp.register_callback_query_handler(start_soc_media, text='bloger')
     dp.register_callback_query_handler(start_poll_inst, text='Instagram')
     dp.register_callback_query_handler(start_poll_yt, text='YT')
     dp.register_callback_query_handler(start_poll_vk, text='VK')
