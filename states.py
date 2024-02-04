@@ -13,6 +13,23 @@ class SocMedia(StatesGroup):
     Description = State()
 
 
+class Manager_new(StatesGroup):
+    Name = State()
+    Count = State()
+    Company = State()
+    Link = State()
+    Q = State()
+
+
+class Manager(StatesGroup):
+    Number = State()
+    Name = State()
+    Link = State()
+    Exclusive = State()
+    Exclusive_links = State()
+    Q = State()
+
+
 class Work(StatesGroup):
     Number = State()
     Name = State()
@@ -32,15 +49,6 @@ class Barter(StatesGroup):
     Subs = State()
     Offer = State()
     City = State()
-
-
-class Manager(StatesGroup):
-    Number = State()
-    Name = State()
-    Link = State()
-    Exclusive = State()
-    Exclusive_links = State()
-    Q = State()
     
 
 class Colab(StatesGroup):

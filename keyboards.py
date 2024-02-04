@@ -29,12 +29,12 @@ async def start_keyboard() -> InlineKeyboardMarkup:
 #     return markup
 
 
-async def manager_keyboard() -> ReplyKeyboardMarkup:
+async def manager_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-        KeyboardButton(text='Да✅'),
-        KeyboardButton(text='Нет❌')
+        InlineKeyboardButton(text='Да. Можем найти блогеров исходя из запроса клиента', callback_data='y'),
+        InlineKeyboardButton(text='Нет. Работаю только со своими блогерами', callback_data='n')
     ]
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup = InlineKeyboardMarkup( row_width=1)
     markup.add(*buttons)
     return markup
 
@@ -107,6 +107,15 @@ async def reels_keyboard(media) -> InlineKeyboardMarkup:
 async def back_keyboard(string) -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text=f'{string}', callback_data='start'),
+    ]
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(*buttons)
+    return markup
+
+
+async def pass_keyboard(q) -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Пропустить вопрос', callback_data=f'pass_{q}'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)

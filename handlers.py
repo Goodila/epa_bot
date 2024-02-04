@@ -1,10 +1,10 @@
 import os
 from aiogram import types, Dispatcher, types
 from keyboards import start_keyboard, manager_keyboard, bloger_keyboard, number_keyboard, registr_end
-from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, reels_keyboard
+from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, reels_keyboard, pass_keyboard
 from aiogram.dispatcher import FSMContext
 from states import SocMedia
-from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another
+from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another, Manager_new
 from funcs import get_config, Bloger, is_link, is_number
 import time
 from asyncio import sleep
@@ -241,6 +241,94 @@ async def soc_media_description(message: types.Message, state: FSMContext):
     await message.answer(text=text, reply_markup=markup)
     await state.finish()
 
+
+
+#MANAGER_NEW
+async def manager_new_start(call: types.Message, state: FSMContext):
+    """Начало опроса manager"""
+    await state.set_state(Manager_new.Name.state)
+    text = '''Ну что ж, приступим к добавлению. Это займет у Вас не более 1 минуты😉
+
+Как я могу к Вам обращаться?'''
+    markup = await back_keyboard('Назад')
+    await call.message.edit_text(text, reply_markup=markup)
+
+
+async def manager_new_name(message: types.Message, state: FSMContext):
+    """Запись имя, вопрос кол-во блогеров"""
+    await state.update_data(username=message.from_user.username)
+    await state.update_data(user_id=message.from_user.id)
+    await state.update_data(name=message.text)
+    await state.set_state(Manager_new.Count.state)
+    text = f'''{message.text}, подскажите примерное или точное количество блогеров в Вашей базе?'''
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.answer(text, reply_markup=markup)
+
+
+async def manager_new_count(message: types.Message, state: FSMContext):
+    """Запись кол-во блогеров, вопрос назв комп"""
+    await state.update_data(count=message.text)
+    await state.set_state(Manager_new.Company.state)
+    text = '''Укажите название вашей компании ?
+
+Если нет - пропустите вопрос'''
+    markup = await pass_keyboard(q='Company')
+    await message.answer(text, reply_markup=markup)
+
+
+async def manager_new_company(message: types.Message, state: FSMContext):
+    """Запись назв. компании, вопрос сайт комп."""
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(company='Нет')
+        text = '''Укажите ссылку на Ваш сайт\n\nЕсли нет - пропустите вопрос'''
+        markup = await pass_keyboard(q='Site')
+        await message.message.edit_text(text, reply_markup=markup)
+        await state.set_state(Manager_new.Link.state)
+        return
+    else:
+        await state.update_data(company=message.text)
+
+    text = '''Укажите ссылку на Ваш сайт
+Если нет - пропустите вопрос'''
+    markup = await pass_keyboard(q='Site')
+    await message.answer(text, reply_markup=markup)
+    await state.set_state(Manager_new.Link.state)
+
+
+async def manager_new_link(message: types.Message, state: FSMContext):
+    """Запись сайт компании, вопрос подбор"""
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(site='Нет')
+        text = 'Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?'
+        markup = await manager_keyboard()
+        await message.message.edit_text(text, reply_markup=markup)
+        await state.set_state(Manager_new.Q.state)
+        return
+    else:
+        if is_link(message.text) == True:
+            await state.update_data(company=message.text)
+            text = ''' Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?'''
+            markup = await manager_keyboard()
+            await state.set_state(Manager_new.Q.state)
+        else:
+            text = '*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.'
+            markup = await pass_keyboard(q='Site')
+    await message.answer(text, reply_markup=markup)
+
+
+async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
+    """Запись назв. компании, вопрос сайт компании"""
+    if call.data == 'y':
+        await state.update_data(q='Да')
+    else:
+        await state.update_data(q='Нет')
+    data = await state.get_data()
+    text = '''✅Благодарю Вас за ответы, в ближайшее время с вами свяжутся наши специалисты
+
+Ожидайте ответного сообщения в Telegram от сотрудника ЕРА  ''' + ' | '.join(list(map(str, data.values())))
+    await call.message.edit_text(text)
+    await state.finish()
+    await start_again(call.message)
 
 # async def k(message: types.Message, state: FSMContext):
 #     text = f'''<u>Вопрос 5 из 6</u>
@@ -1835,6 +1923,16 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(soc_media_topic_another, state=SocMedia.Topic_another)
     dp.register_message_handler(soc_media_description, state=SocMedia.Description)
 
+    dp.register_callback_query_handler(manager_new_start, text='manager')
+    dp.register_message_handler(manager_new_name, state=Manager_new.Name)
+    dp.register_message_handler(manager_new_count, state=Manager_new.Count)
+    dp.register_message_handler(manager_new_company, state=Manager_new.Company)
+    dp.register_callback_query_handler(manager_new_company, state=Manager_new.Company)
+    dp.register_message_handler(manager_new_link, state=Manager_new.Link)
+    dp.register_callback_query_handler(manager_new_link, state=Manager_new.Link)
+    dp.register_callback_query_handler(manager_new_q, state=Manager_new.Q)
+
+
 
     #Commands
     dp.register_message_handler(start, commands=['start'])
@@ -1846,7 +1944,6 @@ def registration_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(start, text='start')
     # dp.register_callback_query_handler(collaboration, text='collaboration')
     dp.register_callback_query_handler(start_poll_barter, text='barter')
-    dp.register_callback_query_handler(start_poll_manager, text='manager')
     dp.register_callback_query_handler(start_soc_media, text='bloger')
     dp.register_callback_query_handler(start_poll_inst, text='Instagram')
     dp.register_callback_query_handler(start_poll_yt, text='YT')

@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ec825527-4eb9-481d-a0c6-ebbadde31970" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/reg_bot.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/reg_bot.iml" afterDir="false" />
+    <list default="true" id="ec825527-4eb9-481d-a0c6-ebbadde31970" name="Changes" comment="bloger upd">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards.py" afterDir="false" />
@@ -72,6 +71,14 @@
       <option name="presentableId" value="Default" />
       <updated>1693134667890</updated>
     </task>
+    <task id="LOCAL-00001" summary="bloger upd">
+      <created>1707074349398</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1707074349398</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -84,5 +91,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="bloger upd" />
+    <option name="LAST_COMMIT_MESSAGE" value="bloger upd" />
   </component>
 </project>
