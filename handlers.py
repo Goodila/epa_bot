@@ -1,7 +1,7 @@
 import os
 from aiogram import types, Dispatcher, types
 from keyboards import start_keyboard, manager_keyboard, bloger_keyboard, number_keyboard, registr_end
-from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, reels_keyboard, pass_keyboard
+from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, back_keyboard2, reels_keyboard, pass_keyboard
 from aiogram.dispatcher import FSMContext
 from states import SocMedia
 from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another, Manager_new
@@ -9,10 +9,9 @@ from funcs import get_config, Bloger, is_link, is_number
 import time
 from asyncio import sleep
 
-#работа с гугл таблицами
+# работа с гугл таблицами
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
 
 scope = ["https://spreadsheets.google.com/feeds",
          'https://www.googleapis.com/auth/spreadsheets',
@@ -23,15 +22,18 @@ spreadsheet_era_id = '1zCcn7vOub--6X7gQZ85UCkwCbTjxWjk7xl9b5Ffsqpk'
 spreadsheet_bloger_id = '14eYmCcO-T5kCI0qOuD15ICfceIbBsZ9tn9JJ2pz9u7c'
 creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
 client = gspread.authorize(creds)
+
+
 # ОБРАЗЕЦ ДЛЯ ПОДКЛЮЧЕНИЯ
 # spreadsheet = client.open_by_key(spreadsheet_id)
 # sheet = spreadsheet.get_worksheet(0)  # 0 refers to the first sheet
 
 
-async def number_wrong(message, number=True, text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'):
+async def number_wrong(message, number=True,
+                       text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'):
     text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
     if number == False:
-        text=text2
+        text = text2
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
@@ -42,12 +44,11 @@ async def start(message: types.Message):
 <b>Хочу попасть в базу ЕРА</b>
 ✏️ Если ты блогер и хочешь попасть к нам в базу, чтобы получать рекламные/коммерческие и другие интересные предложения.
 
-Менеджер блогеров / агентство 
+<b>Менеджер блогеров / агентство</b>
 ✏️Если у тебя есть блогеры/influence-агенство. Мы с радостью интегрируем тебя и твоих блогеров ко входящим рекламным запросам наших клиентов.
 
 <b>Хочу работать в ЕРА</b>
-✏️Если хочешь стать частью
-Нашей большой команды. Мы найдем место для всех😉 
+✏️Если хочешь стать частью yашей большой команды. Мы найдем место для всех😉 
 
 <b>Influence-GR</b>
 ✏️ Если хочешь получать  уведомления о бесплатных PR-событиях и мероприятиях и спец. проектах для паблишеров.
@@ -62,8 +63,7 @@ async def start(message: types.Message):
     if isinstance(message, types.Message):
         await message.answer(text=text, reply_markup=markup)
     elif isinstance(message, types.CallbackQuery):
-        await message.message.edit_text(text=text, reply_markup=markup)
-
+        await message.message.answer(text=text, reply_markup=markup)
 
 
 async def start_again(message: types.Message):
@@ -86,6 +86,37 @@ async def me(message: types.Message):
     print(message)
 
 
+async def back(call: types.CallbackQuery, state: FSMContext):
+    res = await state.get_state()
+    # print('enter', res, type(res))
+    if res == None:
+        # print('its none')
+        await start_again(call.message)
+        return
+
+    if res.split(':')[0] == 'SocMedia':
+        await SocMedia.previous()
+        data = await state.get_data()
+        func = data['func']
+        # print(data['func'])
+        await func(call, state)
+
+
+    elif res.split(':')[0] == 'Manager_new':
+        await Manager_new.previous()
+        data = await state.get_data()
+        func = data['func']
+        # print(data['func'])
+        await func(call, state)
+
+    res = await state.get_state()
+    if res == None:
+        # print('its none')
+        await start_again(call.message)
+        return
+    # print("out", res)
+
+
 async def start_soc_media(message: types.Message, state: FSMContext):
     """Начало опроса (хочу попасть в ера)"""
     await state.set_state(SocMedia.Name.state)
@@ -94,17 +125,21 @@ async def start_soc_media(message: types.Message, state: FSMContext):
     text = '''Ну что ж, приступим к добавлению. Это займет у Вас не более 2-3 минут😉
 
 Как я могу к Вам обращаться?'''
-    markup = await back_keyboard('Назад')
-    await message.message.edit_text(text, reply_markup=markup)
+    markup = await back_keyboard('Отменить регистрацию')
+    await message.message.answer(text, reply_markup=markup)
 
 
 async def soc_media_name(message: types.Message, state: FSMContext):
     """Запоминает имя, спрашивает основную соцсеть"""
-    await state.update_data(name=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(name=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=start_soc_media)
     data = await state.get_data()
     name = data['name']
     text = f'''<u>Вопрос 1 из 6</u>
-{name}, какая у Вас основная социальная сеть?'''
+<b>{name}, какая у Вас основная социальная сеть?</b>'''
     await state.set_state(SocMedia.SM.state)
     markup = await bloger_keyboard()
     await message.answer(text, reply_markup=markup)
@@ -113,66 +148,101 @@ async def soc_media_name(message: types.Message, state: FSMContext):
 async def soc_media_sm(call: types.CallbackQuery, state: FSMContext):
     """Запоминает осн.соцсеть, спраш. ссылку на соц.с."""
     await state.update_data(SM=call.data)
-    text = '''Скопируйте и вставьте прямую кликабельную ссылку на Вашу основную социальную сеть.'''
+    await state.update_data(func=soc_media_name)
+    text = '''<b>Скопируйте и вставьте прямую кликабельную ссылку на Вашу основную социальную сеть.</b>'''
     await state.set_state(SocMedia.Link.state)
-    markup = await back_keyboard('Отмена регистрации')
+    markup = await back_keyboard2('Отмена регистрации')
     await call.message.answer(text, reply_markup=markup)
 
 
 async def soc_media_link(message: types.Message, state: FSMContext):
     """Запоминает осн.соцсеть, спраш. подписч"""
+    await state.update_data(func=soc_media_sm)
     if is_link(message.text) == True:
         await state.update_data(link=message.text)
         text = '''<u>Вопрос 2 из 6</u>
-Количество подписчиков?
-(Полным числом, с пробелами, без сокращений, пример: 1 220 000)'''
+<b>Количество подписчиков?</b>
+<i>(Полным числом, с пробелами, без сокращений, пример: 1 220 000)</i>'''
         await state.set_state(SocMedia.Subs.state)
-        markup = await back_keyboard('Отмена регистрации')
+        markup = await back_keyboard2('Отмена регистрации')
         await message.answer(text, reply_markup=markup)
     else:
-        text = '*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.'
-        markup = await back_keyboard('Отменить регистрацию')
+        text = '<i>*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.</i>'
+        markup = await back_keyboard2('Отменить регистрацию')
+        if isinstance(message, types.CallbackQuery):
+            message = message.message
         await message.answer(text, reply_markup=markup)
+
+
+async def soc_media_link2(message: types.Message, state: FSMContext):
+    if isinstance(message, types.Message):
+        await state.update_data(link=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=soc_media_sm)
+    text = '''<u>Вопрос 2 из 6</u>
+<b>Количество подписчиков?</b>
+<i>(Полным числом, с пробелами, без сокращений, пример: 1 220 000)</i>'''
+    await state.set_state(SocMedia.Subs.state)
+    markup = await back_keyboard2('Отмена регистрации')
+    await message.answer(text, reply_markup=markup)
 
 
 async def soc_media_subs(message: types.Message, state: FSMContext):
     """Запоминает subs, спрашивает city"""
-    await state.update_data(subs=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(subs=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=soc_media_link2)
     text = f'''<u>Вопрос 3 из 6</u>
-Город Вашего постоянного проживания?'''
+<b>Город Вашего постоянного проживания?</b>'''
     await state.set_state(SocMedia.City.state)
-    markup = await back_keyboard('Отменить регистрацию')
+    markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
 
 async def soc_media_city(message: types.Message, state: FSMContext):
     """Запоминает city, спрашивает geo1"""
-    await state.update_data(city=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(city=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=soc_media_subs)
     text = f'''<u>Вопрос 4 из 6</u>
-Основное ГЕО Ваших подписчиков?
+<b>Основное ГЕО Ваших подписчиков?</b>
 <em>(Укажите Страну)</em>'''
     await state.set_state(SocMedia.Geo1.state)
-    markup = await back_keyboard('Отменить регистрацию')
+    markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
 
 async def soc_media_geo1(message: types.Message, state: FSMContext):
     """Запоминает geo1, спрашивает geo2"""
-    await state.update_data(geo1=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(geo1=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=soc_media_city)
     text = f'''<u>Вопрос 4 из 6</u>
-Основное ГЕО Ваших подписчиков?
+<b>Основное ГЕО Ваших подписчиков?</b>
 <em>(Укажите город)</em>'''
     await state.set_state(SocMedia.Geo2.state)
-    markup = await back_keyboard('Отменить регистрацию')
+    markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
 
 async def soc_media_geo2(message: types.Message, state: FSMContext):
     """Запоминает geo2, спрашивает тематику"""
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=soc_media_geo1)
     await state.update_data(geo2=message.text)
     await state.update_data(topic=[])
     text = f'''<u>Вопрос 5 из 6</u>
-Укажите тематику Вашего блога?'''
+<b>Укажите тематику Вашего блога?</b>
+
+<i>(Вы можете выбрать несколько тематик, поочередно)</i>'''
     lst = get_config(flag=True)
     await state.set_state(SocMedia.Topic.state)
     markup = await topic_keyboard(lst)
@@ -182,7 +252,7 @@ async def soc_media_geo2(message: types.Message, state: FSMContext):
 async def soc_media_topic(call: types.CallbackQuery, state: FSMContext):
     """Обрабатывает выбор тематики"""
     if call.data.split('_')[1] == 'Другое (указать в примечании)':
-        text = 'Укажите тематику одним сообщением'
+        text = '<b>Укажите тематику одним сообщением</b>\n\n<i>(Вы можете выбрать несколько тематик, поочередно)</i>'
         await state.set_state(SocMedia.Topic_another.state)
         await call.message.edit_text(text=text)
         return
@@ -190,17 +260,17 @@ async def soc_media_topic(call: types.CallbackQuery, state: FSMContext):
     lst = lst['topic']
     lst.append(call.data.split('_')[1])
     await state.update_data(topic=lst)
-    text = f'''Тематика: {call.data.split('_')[1]} добавлена!
-    Желаете выбрать еще тематику?'''
+    text = f'''<b>Тематика: {call.data.split('_')[1]} добавлена!
+    Желаете выбрать еще тематику?</b>'''
     markup = await topic_keyboard_2()
     await call.message.edit_text(text=text, reply_markup=markup)
 
 
 async def soc_media_topic_2(call: types.CallbackQuery, state: FSMContext):
-    """обрабатывает клавиатуры выбора новой тематики ил закончить выбор"""
+    """обрабатывает клавиатуры выбора новой тематики или закончить выбор"""
     if call.data == 'topic_start':
         lst = get_config(flag=True)
-        text = 'Выберите тематику Вашего контента:'
+        text = '<b>Выберите тематику Вашего контента:</b>'
         markup = await topic_keyboard(lst)
         await call.message.edit_text(text=text, reply_markup=markup)
         return
@@ -210,40 +280,58 @@ async def soc_media_topic_2(call: types.CallbackQuery, state: FSMContext):
         lst = lst['topic']
         lst = ', '.join(lst)
         await state.update_data(topic=lst)
-        markup = await back_keyboard('Отменить регистрацию')
+        await state.update_data(func=soc_media_geo2)
+        markup = await back_keyboard2('Отменить регистрацию')
     text = f'''<em>Вопрос 6 из 6</em>
-{name}, кратко опишите о чем Ваш блог, что вы транслируете?'''
+<b>{name}, кратко опишите о чем Ваш блог, что вы транслируете?</b>
+
+<i>(Не менее 15 слов)</i>'''
     await call.message.edit_text(text=text, reply_markup=markup)
     await state.set_state(SocMedia.Description.state)
 
 
 async def soc_media_topic_another(message: types.Message, state: FSMContext):
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
     ''' Обрабатывает выбор тематики - другое'''
     lst = await state.get_data()
     lst = lst['topic']
     lst.append(message.text)
     await state.update_data(topic=lst)
-    text = f'''Тематика: {message.text} добавлена!
-    желаете выбрать еще тематику?'''
+    text = f'''<b>Тематика: {message.text} добавлена!
+    желаете выбрать еще тематику?</b>'''
     markup = await topic_keyboard_2()
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(SocMedia.Topic.state)
 
 
 async def soc_media_description(message: types.Message, state: FSMContext):
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
     """Заканчивает процесс регистрации"""
     await state.update_data(desc=message.text)
     lst = await state.get_data()
-    text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
-
-Ожидайте ответного сообщения в Telegram от сотрудника ЕРА\n\n''' + ' | '.join(list(map(str, lst.values())))
+    text = '''<b>Вы можете добавить информацию о еще одной социальной сети, или же завершить процесс регистрации</b>'''
     markup = await registr_end()
     await message.answer(text=text, reply_markup=markup)
     await state.finish()
+    print(lst)
+
+
+async def soc_media_description2(message: types.Message, state: FSMContext):
+    """обработка завершение регистрации"""
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    markup = await back_keyboard("В главное меню")
+    text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
+
+Ожидайте ответного сообщения в Telegram от сотрудника ЕРА'''
+    await message.answer(text=text, reply_markup=markup)
 
 
 
-#MANAGER_NEW
+
+# MANAGER_NEW
 async def manager_new_start(call: types.Message, state: FSMContext):
     """Начало опроса manager"""
     await state.set_state(Manager_new.Name.state)
@@ -251,55 +339,72 @@ async def manager_new_start(call: types.Message, state: FSMContext):
 
 Как я могу к Вам обращаться?'''
     markup = await back_keyboard('Назад')
-    await call.message.edit_text(text, reply_markup=markup)
+    await call.message.answer(text, reply_markup=markup)
 
 
 async def manager_new_name(message: types.Message, state: FSMContext):
     """Запись имя, вопрос кол-во блогеров"""
+    await state.update_data(func=manager_new_start)
     await state.update_data(username=message.from_user.username)
     await state.update_data(user_id=message.from_user.id)
-    await state.update_data(name=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(name=message.text)
     await state.set_state(Manager_new.Count.state)
-    text = f'''{message.text}, подскажите примерное или точное количество блогеров в Вашей базе?'''
-    markup = await back_keyboard('Отменить регистрацию')
+    data = await state.get_data()
+    name = data['name']
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    text = f'''<b>{name}, подскажите примерное или точное количество блогеров в Вашей базе?</b>'''
+    markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
 
 async def manager_new_count(message: types.Message, state: FSMContext):
     """Запись кол-во блогеров, вопрос назв комп"""
-    await state.update_data(count=message.text)
+    if isinstance(message, types.Message):
+        await state.update_data(count=message.text)
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=manager_new_name)
     await state.set_state(Manager_new.Company.state)
-    text = '''Укажите название вашей компании ?
+    text = '''<b>Укажите название вашей компании ?</b>
 
-Если нет - пропустите вопрос'''
+<i>Если нет - пропустите вопрос</i>'''
     markup = await pass_keyboard(q='Company')
     await message.answer(text, reply_markup=markup)
 
 
 async def manager_new_company(message: types.Message, state: FSMContext):
     """Запись назв. компании, вопрос сайт комп."""
+    await state.update_data(func=manager_new_count)
     if isinstance(message, types.CallbackQuery):
-        await state.update_data(company='Нет')
-        text = '''Укажите ссылку на Ваш сайт\n\nЕсли нет - пропустите вопрос'''
-        markup = await pass_keyboard(q='Site')
-        await message.message.edit_text(text, reply_markup=markup)
-        await state.set_state(Manager_new.Link.state)
-        return
+        if message.data != 'back':
+            await state.update_data(func=manager_new_count)
+            await state.update_data(company='Нет')
+            text = '''<b>Укажите ссылку на Ваш сайт</b>\n\n<i>Если нет - пропустите вопрос</i>'''
+            markup = await pass_keyboard(q='Site')
+            await message.message.edit_text(text, reply_markup=markup)
+            await state.set_state(Manager_new.Link.state)
+            return
     else:
+        await state.update_data(func=manager_new_count)
         await state.update_data(company=message.text)
+    text = '''<b>Укажите ссылку на Ваш сайт</b>
 
-    text = '''Укажите ссылку на Ваш сайт
-Если нет - пропустите вопрос'''
+<i>Если нет - пропустите вопрос</i>'''
     markup = await pass_keyboard(q='Site')
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
     await message.answer(text, reply_markup=markup)
     await state.set_state(Manager_new.Link.state)
 
 
 async def manager_new_link(message: types.Message, state: FSMContext):
     """Запись сайт компании, вопрос подбор"""
+    await state.update_data(func=manager_new_company)
     if isinstance(message, types.CallbackQuery):
         await state.update_data(site='Нет')
-        text = 'Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?'
+        text = '<b>Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?</b>'
         markup = await manager_keyboard()
         await message.message.edit_text(text, reply_markup=markup)
         await state.set_state(Manager_new.Q.state)
@@ -307,11 +412,11 @@ async def manager_new_link(message: types.Message, state: FSMContext):
     else:
         if is_link(message.text) == True:
             await state.update_data(company=message.text)
-            text = ''' Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?'''
+            text = ''' <b>Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?</b>'''
             markup = await manager_keyboard()
             await state.set_state(Manager_new.Q.state)
         else:
-            text = '*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.'
+            text = '<i>*URL введен некорректно. Пожалуйста, повторите ввод URL еще раз.</i>'
             markup = await pass_keyboard(q='Site')
     await message.answer(text, reply_markup=markup)
 
@@ -323,12 +428,13 @@ async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
     else:
         await state.update_data(q='Нет')
     data = await state.get_data()
-    text = '''✅Благодарю Вас за ответы, в ближайшее время с вами свяжутся наши специалисты
+    print(data)
+    markup = await back_keyboard("В главное меню")
+    text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
 
-Ожидайте ответного сообщения в Telegram от сотрудника ЕРА  ''' + ' | '.join(list(map(str, data.values())))
-    await call.message.edit_text(text)
-    await state.finish()
-    await start_again(call.message)
+    Ожидайте ответного сообщения в Telegram от сотрудника ЕРА'''
+    await call.message.answer(text=text, reply_markup=markup)
+
 
 # async def k(message: types.Message, state: FSMContext):
 #     text = f'''<u>Вопрос 5 из 6</u>
@@ -337,7 +443,6 @@ async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
 #     await state.set_state(SocMedia.Topic.state)
 #     markup = await topic_keyboard(lst)
 #     await message.answer(text, reply_markup=markup)
-
 
 
 async def start_poll_work(message: types.Message, state: FSMContext):
@@ -363,7 +468,6 @@ async def work_number(message: types.Message, state: FSMContext):
         text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
         markup = await back_keyboard('Отменить регистрацию')
         await message.answer(text, reply_markup=markup)
-
 
 
 async def work_name(message: types.Message, state: FSMContext):
@@ -405,7 +509,7 @@ async def work_why(message: types.Message, state: FSMContext):
 async def work_know_from(message: types.Message, state: FSMContext):
     ''' Запоминает почему ЕРА, спрашивает резюме'''
     await state.update_data(know_from=message.text)
-    text='Пришлите ссылку на Ваше резюме'
+    text = 'Пришлите ссылку на Ваше резюме'
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
     await state.set_state(Work.Link_resume.state)
@@ -420,7 +524,7 @@ async def work_resume(message: types.Message, state: FSMContext):
         await message.answer(text, reply_markup=markup)
         await state.set_state(Work.Link_case.state)
     else:
-        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
+        text = 'К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
         markup = await back_keyboard('Отменить регистрацию')
         await message.answer(text, reply_markup=markup)
 
@@ -440,7 +544,7 @@ async def work_load(message: types.Message, state: FSMContext):
     text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(0)  
+    sheet = spreadsheet.get_worksheet(0)
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
@@ -459,7 +563,7 @@ async def work_load(message: types.Message, state: FSMContext):
 #     await message.bot.send_message(chat_id=message.from_user.id, text=text, reply_markup=markup)
 
 
-#НАЧАЛО ОПРОСА БАРТЕР
+# НАЧАЛО ОПРОСА БАРТЕР
 async def start_poll_barter(message: types.Message, state: FSMContext):
     ''' Начало опроса по бартеру, Name '''
     await state.set_state(Barter.Name.state)
@@ -503,7 +607,7 @@ async def barter_link(message: types.Message, state: FSMContext):
         await message.answer(text, reply_markup=markup)
         await state.set_state(Barter.Subs.state)
     else:
-        text='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
+        text = 'К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
         markup = await back_keyboard('Отменить регистрацию')
         await message.answer(text, reply_markup=markup)
 
@@ -532,14 +636,14 @@ async def barter_offer(message: types.Message, state: FSMContext):
     text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text)
     spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(1)  
+    sheet = spreadsheet.get_worksheet(1)
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
     await start_again(message)
 
 
-#НАЧАЛО ОПРОСА МЕНЕДЖЕР
+# НАЧАЛО ОПРОСА МЕНЕДЖЕР
 async def start_poll_manager(message: types.Message, state: FSMContext):
     ''' Начало опроса по бартеру, Number '''
     await state.set_state(Manager.Number.state)
@@ -561,6 +665,7 @@ async def manager_number(message: types.Message, state: FSMContext):
         await state.set_state(Manager.Name.state)
     else:
         await number_wrong(message)
+
 
 async def manager_name(message: types.Message, state: FSMContext):
     ''' Запоминает имя, спрашивает ссылку на список блогеров'''
@@ -588,7 +693,7 @@ async def manager_exclusive(message: types.Message, state: FSMContext):
     data = message.data
     data = data.split('_')
     if data[1] == "yes":
-        text = "Пришлите ссылки на этих блогеров одним сообщением"    
+        text = "Пришлите ссылки на этих блогеров одним сообщением"
         await state.set_state(Manager.Exclusive_links.state)
     if data[1] == "no":
         await state.update_data(exclusive="Нет")
@@ -616,14 +721,14 @@ async def manager_q(message: types.Message, state: FSMContext):
     text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
     spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(2)  
+    sheet = spreadsheet.get_worksheet(2)
     data = await state.get_data()
     sheet.append_row(list(data.values()))
     await state.finish()
     await start_again(message)
 
 
-#НАЧАЛО ОПРОСА СОТРУДНИЧЕСТВО 
+# НАЧАЛО ОПРОСА СОТРУДНИЧЕСТВО
 async def start_poll_col(message: types.Message, state: FSMContext):
     ''' Начало опроса по сотрудничеству, Name '''
     await state.set_state(Colab.Name.state)
@@ -678,7 +783,7 @@ async def colab_number(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_era_id)
-        sheet = spreadsheet.get_worksheet(3)  
+        sheet = spreadsheet.get_worksheet(3)
         data = await state.get_data()
         sheet.append_row(list(data.values()))
         await state.finish()
@@ -687,7 +792,7 @@ async def colab_number(message: types.Message, state: FSMContext):
         await number_wrong(message)
 
 
-#НАЧАЛО ОПРОСА БЛОГЕР
+# НАЧАЛО ОПРОСА БЛОГЕР
 async def start_poll_bloger(message: types.Message, state: FSMContext):
     ''' Выбераем соцсеть для регистрации '''
     text = '''Выберите социальную сеть со своим блогом
@@ -696,8 +801,8 @@ async def start_poll_bloger(message: types.Message, state: FSMContext):
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
-#НАЧАЛО ОПРОСА INSTAGRM
-async def start_poll_inst(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА INSTAGRM
+async def start_poll_inst(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера инста, Number '''
     await state.set_state(Instagram.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -708,12 +813,12 @@ async def start_poll_inst(message: types.Message, state: FSMContext, flag = None
         markup = await number_keyboard()
         await state.set_state(Instagram.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -723,7 +828,7 @@ async def inst_number(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(number=Bloger(f"{call.from_user.id}").get())
         text = 'Отправьте ссылку на Ваш Instagram'
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_inst(call, state, flag = True)
+        await start_poll_inst(call, state, flag=True)
     else:
         if is_number(call.text) == True:
             await state.update_data(number=call.text)
@@ -741,8 +846,8 @@ async def inst_number_wait(message: types.Message, state: FSMContext):
     if message.text == "Да✅":
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = 'Отправьте ссылку на Ваш Instagram'
-    else: 
-        await start_poll_inst(message, state, flag = True)
+    else:
+        await start_poll_inst(message, state, flag=True)
         await state.set_state(Instagram.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -760,7 +865,8 @@ async def inst_link(message: types.Message, state: FSMContext):
         await message.answer(text=text, reply_markup=markup)
         await state.set_state(Instagram.Topic.state)
     else:
-        await number_wrong(message, number=False, text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"')
+        await number_wrong(message, number=False,
+                           text2='К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"')
 
 
 async def inst_topic_choose(message: types.Message, state: FSMContext):
@@ -884,12 +990,12 @@ async def inst_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(0)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(0)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
-        cell_list = sheet.range(f'A{num}:AQ{num}')  
-        cell_index = [0,1,2,3,4,5,10,11,18,19,27,28,33]
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0, 1, 2, 3, 4, 5, 10, 11, 18, 19, 27, 28, 33]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(9)
@@ -900,8 +1006,8 @@ async def inst_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#НАЧАЛО ОПРОСА YOUTUBE
-async def start_poll_yt(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА YOUTUBE
+async def start_poll_yt(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера инста, Number '''
     await state.set_state(YT.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -912,12 +1018,12 @@ async def start_poll_yt(message: types.Message, state: FSMContext, flag = None):
         markup = await number_keyboard()
         await state.set_state(YT.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -927,7 +1033,7 @@ async def yt_number(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(number=Bloger(f"{call.from_user.id}").get())
         text = 'Ссылка на YouTube канал \n*В формате https://www.youtube.com/channel'
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_yt(call, state, flag = True)
+        await start_poll_yt(call, state, flag=True)
     else:
         if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
             await state.update_data(number=call.text)
@@ -945,8 +1051,8 @@ async def yt_number_wait(message: types.Message, state: FSMContext):
     if message.text == "Да✅":
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = 'Ссылка на YouTube канал \n*В формате https://www.youtube.com/channel'
-    else: 
-        await start_poll_yt(message, state, flag = True)
+    else:
+        await start_poll_yt(message, state, flag=True)
         await state.set_state(YT.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -1053,7 +1159,7 @@ async def yt_questions_shorts(message: types.Message, state: FSMContext):
         await state.update_data(stories="не размещает")
         await state.update_data(stories_scope="не размещает")
         text = '''Стоимость размещения интеграции
-*Мы понимаем, что стоимость будет варьироваться в зависимости от запроса, поэтому просим указать среднюю стоимость.''' 
+*Мы понимаем, что стоимость будет варьироваться в зависимости от запроса, поэтому просим указать среднюю стоимость.'''
         await state.set_state(YT.Video.state)
 
     markup = await back_keyboard('Отменить регистрацию')
@@ -1105,12 +1211,12 @@ async def yt_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(1)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(1)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
-        cell_list = sheet.range(f'A{num}:AQ{num}')  
-        cell_index = [0,1,2,3,4,5,10,12,16,17,22,23,31]
+        cell_list = sheet.range(f'A{num}:AQ{num}')
+        cell_index = [0, 1, 2, 3, 4, 5, 10, 12, 16, 17, 22, 23, 31]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(41)
@@ -1124,8 +1230,8 @@ async def yt_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#НАЧАЛО ОПРОСА VK
-async def start_poll_vk(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА VK
+async def start_poll_vk(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера vk, Number '''
     await state.set_state(VK.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -1136,12 +1242,12 @@ async def start_poll_vk(message: types.Message, state: FSMContext, flag = None):
         markup = await number_keyboard()
         await state.set_state(VK.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -1151,7 +1257,7 @@ async def vk_number(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(number=Bloger(f"{call.from_user.id}").get())
         text = 'Ссылка на страницу Вконтакте'
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_vk(call, state, flag = True)
+        await start_poll_vk(call, state, flag=True)
     else:
         if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
             await state.update_data(number=call.text)
@@ -1169,8 +1275,8 @@ async def vk_number_wait(message: types.Message, state: FSMContext):
     if message.text == "Да✅":
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = 'Ссылка на страницу Вконтакте'
-    else: 
-        await start_poll_vk(message, state, flag = True)
+    else:
+        await start_poll_vk(message, state, flag=True)
         await state.set_state(VK.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -1328,12 +1434,12 @@ async def vk_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(2)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(2)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
         cell_list = sheet.range(f'A{num}:AQ{num}')
-        cell_index = [0,1,2,3,4,5,9,11,14,16,24,25,33]
+        cell_index = [0, 1, 2, 3, 4, 5, 9, 11, 14, 16, 24, 25, 33]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(41)
@@ -1346,8 +1452,8 @@ async def vk_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#НАЧАЛО ОПРОСА TG
-async def start_poll_tg(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА TG
+async def start_poll_tg(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера tg, Number '''
     await state.set_state(TG.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -1358,12 +1464,12 @@ async def start_poll_tg(message: types.Message, state: FSMContext, flag = None):
         markup = await number_keyboard()
         await state.set_state(TG.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -1374,7 +1480,7 @@ async def tg_number(call: types.CallbackQuery, state: FSMContext):
         text = '''Ссылка на Telegram канал
 *В формате https://t.me/channel'''
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_tg(call, state, flag = True)
+        await start_poll_tg(call, state, flag=True)
     else:
         if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
             await state.update_data(number=call.text)
@@ -1394,8 +1500,8 @@ async def tg_number_wait(message: types.Message, state: FSMContext):
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = '''Ссылка на Telegram канал
 *В формате https://t.me/channel'''
-    else: 
-        await start_poll_tg(message, state, flag = True)
+    else:
+        await start_poll_tg(message, state, flag=True)
         await state.set_state(TG.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -1504,8 +1610,8 @@ async def tg_country(message: types.Message, state: FSMContext):
 async def tg_description(message: types.Message, state: FSMContext):
     ''' Запоминает desc и спрашивает статистику '''
     await state.update_data(stories=message.text)
-    text ='''Ссылка на статистику 
-*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''    
+    text = '''Ссылка на статистику 
+*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(TG.Statistic.state)
@@ -1518,12 +1624,12 @@ async def tg_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(3)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(3)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
         cell_list = sheet.range(f'A{num}:AQ{num}')
-        cell_index = [0,1,2,3,4,5,10,12,20,23,25]
+        cell_index = [0, 1, 2, 3, 4, 5, 10, 12, 20, 23, 25]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(33)
@@ -1536,8 +1642,8 @@ async def tg_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#НАЧАЛО ОПРОСА DZ
-async def start_poll_dz(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА DZ
+async def start_poll_dz(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера dz, Number '''
     await state.set_state(DZ.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -1548,12 +1654,12 @@ async def start_poll_dz(message: types.Message, state: FSMContext, flag = None):
         markup = await number_keyboard()
         await state.set_state(DZ.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -1563,7 +1669,7 @@ async def dz_number(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(number=Bloger(f"{call.from_user.id}").get())
         text = '''Ссылка на страницу Дзен'''
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_dz(call, state, flag = True)
+        await start_poll_dz(call, state, flag=True)
     else:
         if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
             await state.update_data(number=call.text)
@@ -1580,8 +1686,8 @@ async def dz_number_wait(message: types.Message, state: FSMContext):
     if message.text == "Да✅":
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = '''Ссылка на страницу Дзен'''
-    else: 
-        await start_poll_dz(message, state, flag = True)
+    else:
+        await start_poll_dz(message, state, flag=True)
         await state.set_state(DZ.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -1681,8 +1787,8 @@ async def dz_post(message: types.Message, state: FSMContext):
 async def dz_description(message: types.Message, state: FSMContext):
     ''' Запоминает desc и спрашивает статистику '''
     await state.update_data(stories=message.text)
-    text ='''Ссылка на статистику 
-*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''    
+    text = '''Ссылка на статистику 
+*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(DZ.Statistic.state)
@@ -1695,12 +1801,12 @@ async def dz_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(4)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(4)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
         cell_list = sheet.range(f'A{num}:AQ{num}')
-        cell_index = [0,1,2,3,4,5,6,8,18,20]
+        cell_index = [0, 1, 2, 3, 4, 5, 6, 8, 18, 20]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(28)
@@ -1713,8 +1819,8 @@ async def dz_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#НАЧАЛО ОПРОСА ДРУГОЕ
-async def start_poll_another(message: types.Message, state: FSMContext, flag = None):
+# НАЧАЛО ОПРОСА ДРУГОЕ
+async def start_poll_another(message: types.Message, state: FSMContext, flag=None):
     ''' Начало опроса блогера another, Number '''
     await state.set_state(Another.Number.state)
     await state.update_data(username=message.from_user.username)
@@ -1725,12 +1831,12 @@ async def start_poll_another(message: types.Message, state: FSMContext, flag = N
         markup = await number_keyboard()
         await state.set_state(Another.Wait.state)
     else:
-        #Запросить номер    
+        # Запросить номер
         text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
         markup = await back_keyboard('Отменить регистрацию')
     if flag:
         text = 'Напишите свой новый номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-        markup =  types.ReplyKeyboardRemove()
+        markup = types.ReplyKeyboardRemove()
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
 
@@ -1740,7 +1846,7 @@ async def another_number(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(number=Bloger(f"{call.from_user.id}").get())
         text = '''Ссылка на страницу Вашего блога'''
     elif (call.data if type(call) is types.CallbackQuery else call.text) == 'number_n':
-        await start_poll_another(call, state, flag = True)
+        await start_poll_another(call, state, flag=True)
     else:
         if is_number((call.data if type(call) is types.CallbackQuery else call.text)) == True:
             await state.update_data(number=call.text)
@@ -1757,8 +1863,8 @@ async def another_number_wait(message: types.Message, state: FSMContext):
     if message.text == "Да✅":
         await state.update_data(number=Bloger(f"{message.from_user.id}").get())
         text = '''Ссылка на страницу Вашего блога'''
-    else: 
-        await start_poll_another(message, state, flag = True)
+    else:
+        await start_poll_another(message, state, flag=True)
         await state.set_state(Another.Number.state)
         return
     await message.answer(text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -1858,8 +1964,8 @@ async def another_post(message: types.Message, state: FSMContext):
 async def another_description(message: types.Message, state: FSMContext):
     ''' Запоминает desc и спрашивает статистику '''
     await state.update_data(stories=message.text)
-    text ='''Ссылка на статистику 
-*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''    
+    text = '''Ссылка на статистику 
+*Ссылка на любой удобный для Вас диск, содержащий статистику аудитории по гендеру, возрасту, географии. '''
     markup = await back_keyboard('Отменить регистрацию')
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(Another.Statistic.state)
@@ -1872,12 +1978,12 @@ async def another_statistic(message: types.Message, state: FSMContext):
         text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
         await message.answer(text=text)
         spreadsheet = client.open_by_key(spreadsheet_bloger_id)
-        sheet = spreadsheet.get_worksheet(5)  
-        num=len(sheet.col_values(1)) + 1
+        sheet = spreadsheet.get_worksheet(5)
+        num = len(sheet.col_values(1)) + 1
         data = await state.get_data()
         data = list(data.values())
         cell_list = sheet.range(f'A{num}:AQ{num}')
-        cell_index = [0,1,2,3,4,5,6,8,18,20]
+        cell_index = [0, 1, 2, 3, 4, 5, 6, 8, 18, 20]
         for i, val in enumerate(cell_index):
             cell_list[val].value = data[i]
         cell_list.pop(28)
@@ -1890,7 +1996,7 @@ async def another_statistic(message: types.Message, state: FSMContext):
         await number_wrong(message, number=False)
 
 
-#КОНТАКТЫ
+# КОНТАКТЫ
 async def contacts(call: types.CallbackQuery):
     text = '''Telegram: @era_agency_info
 Самый оперативный способ связи  
@@ -1902,14 +2008,21 @@ E-mail: info@era-agency.ru
 Понедельник - Пятница / 10:00 - 19:00
 
 По срочным запросам вне графика работы:
-Телефон: +7 (993) 338-78-28'''
-    markup = await back_keyboard('Назад')
+WhatsApp: +7 (993) 338-78-28'''
+    markup = await back_keyboard('Закрыть')
     await call.bot.send_message(call.from_user.id, text=text, reply_markup=markup)
 
 
-#РЕГИСТРАЦИЯ ХЕНДЛЕРОВ
+# РЕГИСТРАЦИЯ ХЕНДЛЕРОВ
 def registration_handlers(dp: Dispatcher):
-    #NEW ONES
+    # Commands
+    dp.register_message_handler(start, commands=['start'])
+    dp.register_message_handler(start, text=['старт'])
+    dp.register_callback_query_handler(back_start, state='*', text='start')
+    # dp.register_message_handler(k, commands=['k'])
+    # NEW ONES
+    # back
+    dp.register_callback_query_handler(back, state='*', text='back')
     # хочу попасть в ЕРА
     dp.register_message_handler(soc_media_name, state=SocMedia.Name)
     dp.register_callback_query_handler(soc_media_sm, state=SocMedia.SM)
@@ -1922,7 +2035,8 @@ def registration_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(soc_media_topic_2, state=SocMedia.Topic, text_startswith='topic')
     dp.register_message_handler(soc_media_topic_another, state=SocMedia.Topic_another)
     dp.register_message_handler(soc_media_description, state=SocMedia.Description)
-
+    dp.register_callback_query_handler(soc_media_description2, text='registr_end')
+    # manager
     dp.register_callback_query_handler(manager_new_start, text='manager')
     dp.register_message_handler(manager_new_name, state=Manager_new.Name)
     dp.register_message_handler(manager_new_count, state=Manager_new.Count)
@@ -1934,14 +2048,9 @@ def registration_handlers(dp: Dispatcher):
 
 
 
-    #Commands
-    dp.register_message_handler(start, commands=['start'])
-    dp.register_message_handler(start, text=['старт'])
-    # dp.register_message_handler(k, commands=['k'])
-    #Callbacks
+    # Callbacks
     dp.register_callback_query_handler(start_poll_col, text='colab_start')
     dp.register_callback_query_handler(start_poll_work, text='work')
-    dp.register_callback_query_handler(start, text='start')
     # dp.register_callback_query_handler(collaboration, text='collaboration')
     dp.register_callback_query_handler(start_poll_barter, text='barter')
     dp.register_callback_query_handler(start_soc_media, text='bloger')
@@ -1951,9 +2060,8 @@ def registration_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(start_poll_tg, text='TG')
     dp.register_callback_query_handler(start_poll_dz, text='Дзен')
     dp.register_callback_query_handler(start_poll_another, text='Другое')
-    dp.register_callback_query_handler(back_start, state='*', text='start')
-    #States
-        #Хочу работать в ЕРА
+    # States
+    # Хочу работать в ЕРА
     dp.register_message_handler(work_number, state=Work.Number)
     dp.register_message_handler(work_name, state=Work.Name)
     dp.register_message_handler(work_age, state=Work.Age)
@@ -1963,7 +2071,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(work_resume, state=Work.Link_resume)
     dp.register_message_handler(work_case, state=Work.Link_case)
     dp.register_message_handler(work_load, state=Work.Load)
-        #Бартер
+    # Бартер
     dp.register_message_handler(barter_name, state=Barter.Name)
     dp.register_message_handler(barter_number, state=Barter.Number)
     dp.register_message_handler(barter_link, state=Barter.Link)
@@ -1971,20 +2079,20 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(barter_city, state=Barter.City)
     dp.register_message_handler(barter_city, state=Barter.City)
     dp.register_message_handler(barter_offer, state=Barter.Offer)
-        #Менеджер
+    # Менеджер
     dp.register_message_handler(manager_number, state=Manager.Number)
     dp.register_message_handler(manager_name, state=Manager.Name)
     dp.register_message_handler(manager_link, state=Manager.Link)
     dp.register_callback_query_handler(manager_exclusive, state=Manager.Exclusive)
     dp.register_message_handler(manager_exclusive_links, state=Manager.Exclusive_links)
     dp.register_message_handler(manager_q, state=Manager.Q)
-        #Сотрудничество
+    # Сотрудничество
     dp.register_message_handler(colab_name, state=Colab.Name)
     dp.register_message_handler(colab_post, state=Colab.Post)
     dp.register_message_handler(colab_company, state=Colab.Company)
     dp.register_message_handler(colab_reason, state=Colab.Reason)
     dp.register_message_handler(colab_number, state=Colab.Number)
-        #Instagram
+    # Instagram
     dp.register_message_handler(inst_number, state=Instagram.Number)
     dp.register_message_handler(inst_number_wait, state=Instagram.Wait)
     dp.register_message_handler(inst_link, state=Instagram.Link)
@@ -1999,7 +2107,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(inst_reels, state=Instagram.Reels)
     dp.register_message_handler(inst_reels_scope, state=Instagram.Reels_scope)
     dp.register_message_handler(inst_statistic, state=Instagram.Statistic)
-        #YouTube
+    # YouTube
     dp.register_message_handler(yt_number, state=YT.Number)
     dp.register_message_handler(yt_number_wait, state=YT.Wait)
     dp.register_message_handler(yt_link, state=YT.Link)
@@ -2015,7 +2123,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(yt_video, state=YT.Video)
     dp.register_message_handler(yt_video_views, state=YT.Video_views)
     dp.register_message_handler(yt_statistic, state=YT.Statistic)
-        #VK
+    # VK
     dp.register_message_handler(vk_number, state=VK.Number)
     dp.register_message_handler(vk_number_wait, state=VK.Wait)
     dp.register_message_handler(vk_link, state=VK.Link)
@@ -2031,7 +2139,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(vk_clip, state=VK.Clip)
     dp.register_message_handler(vk_clip_views, state=VK.Clip_views)
     dp.register_message_handler(vk_statistic, state=VK.Statistic)
-        #TG
+    # TG
     dp.register_message_handler(tg_number, state=TG.Number)
     dp.register_message_handler(tg_number_wait, state=TG.Wait)
     dp.register_message_handler(tg_link, state=TG.Link)
@@ -2044,7 +2152,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(tg_country, state=TG.Country)
     dp.register_message_handler(tg_description, state=TG.Description)
     dp.register_message_handler(tg_statistic, state=TG.Statistic)
-        #Dzen
+    # Dzen
     dp.register_message_handler(dz_number, state=DZ.Number)
     dp.register_message_handler(dz_number_wait, state=DZ.Wait)
     dp.register_message_handler(dz_link, state=DZ.Link)
@@ -2056,7 +2164,7 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(dz_post, state=DZ.Post)
     dp.register_message_handler(dz_description, state=DZ.Description)
     dp.register_message_handler(dz_statistic, state=DZ.Statistic)
-        #Another
+    # Another
     dp.register_message_handler(another_number, state=Another.Number)
     dp.register_message_handler(another_number_wait, state=Another.Wait)
     dp.register_message_handler(another_link, state=Another.Link)
@@ -2068,6 +2176,6 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(another_post, state=Another.Post)
     dp.register_message_handler(another_description, state=Another.Description)
     dp.register_message_handler(another_statistic, state=Another.Statistic)
-        #Контакты
+    # Контакты
     dp.register_callback_query_handler(contacts, text_startswith='contacts')
 

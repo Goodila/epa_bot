@@ -1,5 +1,6 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
+
 class SocMedia(StatesGroup):
     Name = State()
     SM = State()
@@ -49,7 +50,7 @@ class Barter(StatesGroup):
     Subs = State()
     Offer = State()
     City = State()
-    
+
 
 class Colab(StatesGroup):
     Name = State()
@@ -57,7 +58,7 @@ class Colab(StatesGroup):
     Company = State()
     Reason = State()
     Number = State()
-    
+
 
 class Instagram(StatesGroup):
     Number = State()
@@ -107,7 +108,7 @@ class VK(StatesGroup):
     Clip = State()
     Clip_views = State()
     Statistic = State()
-    
+
 
 class TG(StatesGroup):
     Number = State()
@@ -121,9 +122,8 @@ class TG(StatesGroup):
     Country = State()
     Description = State()
     Statistic = State()
-    
 
-    
+
 class DZ(StatesGroup):
     Number = State()
     Wait = State()
@@ -148,4 +148,3 @@ class Another(StatesGroup):
     Post = State()
     Description = State()
     Statistic = State()
-    

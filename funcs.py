@@ -6,6 +6,7 @@ from aiogram import types
 import validators
 import phonenumbers
 
+
 @dataclass
 class Config:
     token: str
@@ -13,22 +14,19 @@ class Config:
     bot_id: int
 
 
-
 def get_config(flag=None):
     if flag:
-        config = json.load(open("config.txt", "r",encoding='utf-8'))
+        config = json.load(open("config.txt", "r", encoding='utf-8'))
         return config['TOPICS']
     else:
         config = json.load(open("config.txt", "r", encoding='utf-8'))
         return Config(token=config['TOKEN'], admins=config['ADMIN_ID'], bot_id=config['BOT_ID'])
 
 
-
-    
 class Bloger:
     def __init__(self, id: str):
         self.id = id
-    
+
     def check(self):
         with open('blogers.json', 'r+') as f:
             blogers = json.load(f)
@@ -48,7 +46,7 @@ class Bloger:
             blogers = json.load(f)
             print(f"Получение номера по id {self.id} из базы")
             return blogers[self.id]
-        
+
 
 def is_link(url):
     return validators.url(url)
@@ -64,9 +62,6 @@ def is_number(number):
     else:
         return False
 
-
-
-        
 # async def events_fomer(events_data: list):
 #     '''формирует список мероприятий в текст'''
 #     res = ''

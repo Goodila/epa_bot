@@ -32,7 +32,8 @@ async def start_keyboard() -> InlineKeyboardMarkup:
 async def manager_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Да. Можем найти блогеров исходя из запроса клиента', callback_data='y'),
-        InlineKeyboardButton(text='Нет. Работаю только со своими блогерами', callback_data='n')
+        InlineKeyboardButton(text='Нет. Работаю только со своими блогерами', callback_data='n'),
+        InlineKeyboardButton(text='Назад', callback_data='back')
     ]
     markup = InlineKeyboardMarkup( row_width=1)
     markup.add(*buttons)
@@ -47,7 +48,8 @@ async def bloger_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text='Telegram', callback_data='TG'),
         InlineKeyboardButton(text='Дзен', callback_data='Дзен'),
         InlineKeyboardButton(text='Другое', callback_data='Другое'),
-        InlineKeyboardButton(text='Назад', callback_data='start')
+        InlineKeyboardButton(text='Назад', callback_data='back'),
+        InlineKeyboardButton(text='Отменить регистрацию', callback_data='start')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)
@@ -75,7 +77,7 @@ async def topic_keyboard(lst) -> InlineKeyboardMarkup:
 
 async def topic_keyboard_2() -> InlineKeyboardMarkup:
     buttons = [
-        InlineKeyboardButton(text='Выбрать еще категорию', callback_data='topic_start'),
+        InlineKeyboardButton(text='Выбрать еще одну тематику', callback_data='topic_start'),
         InlineKeyboardButton(text='✅Закончить выбор', callback_data='topic_end'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
@@ -86,7 +88,7 @@ async def topic_keyboard_2() -> InlineKeyboardMarkup:
 async def registr_end() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text='Добавить еще одну социальную сеть', callback_data='bloger'),
-        InlineKeyboardButton(text='Завершить регистрацию', callback_data='start'),
+        InlineKeyboardButton(text='Завершить регистрацию', callback_data='registr_end'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)
@@ -113,8 +115,19 @@ async def back_keyboard(string) -> InlineKeyboardMarkup:
     return markup
 
 
+async def back_keyboard2(string) -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text=f'Назад', callback_data='back'),
+        InlineKeyboardButton(text=f'{string}', callback_data='start'),
+    ]
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(*buttons)
+    return markup
+
+
 async def pass_keyboard(q) -> InlineKeyboardMarkup:
     buttons = [
+        InlineKeyboardButton(text=f'Назад', callback_data='back'),
         InlineKeyboardButton(text='Пропустить вопрос', callback_data=f'pass_{q}'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
