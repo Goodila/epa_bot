@@ -133,6 +133,9 @@ async def soc_media_name(message: types.Message, state: FSMContext):
     """Запоминает имя, спрашивает основную соцсеть"""
     if isinstance(message, types.Message):
         await state.update_data(name=message.text)
+        if message.text.isdigit():
+            await message.answer('<b>Напишите текстом</b>')
+            return
     if isinstance(message, types.CallbackQuery):
         message = message.message
     await state.update_data(func=start_soc_media)
@@ -206,6 +209,9 @@ async def soc_media_city(message: types.Message, state: FSMContext):
     """Запоминает city, спрашивает geo1"""
     if isinstance(message, types.Message):
         await state.update_data(city=message.text)
+        if message.text.isdigit():
+            await message.answer('<b>Напишите текстом</b>')
+            return
     if isinstance(message, types.CallbackQuery):
         message = message.message
     await state.update_data(func=soc_media_subs)
@@ -221,6 +227,9 @@ async def soc_media_geo1(message: types.Message, state: FSMContext):
     """Запоминает geo1, спрашивает geo2"""
     if isinstance(message, types.Message):
         await state.update_data(geo1=message.text)
+        if message.text.isdigit():
+            await message.answer('<b>Напишите текстом</b>')
+            return
     if isinstance(message, types.CallbackQuery):
         message = message.message
     await state.update_data(func=soc_media_city)
@@ -236,6 +245,9 @@ async def soc_media_geo2(message: types.Message, state: FSMContext):
     """Запоминает geo2, спрашивает тематику"""
     if isinstance(message, types.CallbackQuery):
         message = message.message
+    if message.text.isdigit():
+        await message.answer('<b>Напишите текстом</b>')
+        return
     await state.update_data(func=soc_media_geo1)
     await state.update_data(geo2=message.text)
     await state.update_data(topic=[])
@@ -309,6 +321,9 @@ async def soc_media_description(message: types.Message, state: FSMContext):
     if isinstance(message, types.CallbackQuery):
         message = message.message
     """Заканчивает процесс регистрации"""
+    if message.text.isdigit():
+        await message.answer('<b>Напишите текстом</b>')
+        return
     await state.update_data(desc=message.text)
     lst = await state.get_data()
     text = '''<b>Вы можете добавить информацию о еще одной социальной сети, или же завершить процесс регистрации</b>'''
@@ -349,6 +364,9 @@ async def manager_new_name(message: types.Message, state: FSMContext):
     await state.update_data(user_id=message.from_user.id)
     if isinstance(message, types.Message):
         await state.update_data(name=message.text)
+        if message.text.isdigit():
+            await message.answer('<b>Напишите текстом</b>')
+            return
     await state.set_state(Manager_new.Count.state)
     data = await state.get_data()
     name = data['name']
@@ -388,6 +406,9 @@ async def manager_new_company(message: types.Message, state: FSMContext):
             return
     else:
         await state.update_data(func=manager_new_count)
+        if message.text.isdigit():
+            await message.answer('<b>Напишите текстом</b>')
+            return
         await state.update_data(company=message.text)
     text = '''<b>Укажите ссылку на Ваш сайт</b>
 
@@ -422,7 +443,7 @@ async def manager_new_link(message: types.Message, state: FSMContext):
 
 
 async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
-    """Запись назв. компании, вопрос сайт компании"""
+    """end manager"""
     if call.data == 'y':
         await state.update_data(q='Да')
     else:
