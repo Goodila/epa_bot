@@ -72,12 +72,6 @@ async def start_again(message: types.Message):
     await message.answer(text=text, reply_markup=markup)
 
 
-async def back_start(message: types.Message, state: FSMContext):
-    ''' старт после отмены регистрации'''
-    await state.finish()
-    await start(message)
-
-
 async def help(message: types.Message):
     await message.answer('help')
 
@@ -85,8 +79,26 @@ async def help(message: types.Message):
 async def me(message: types.Message):
     print(message)
 
+def deleter(func):
+    async def wrapper(*args, **kwargs):
+        if isinstance(args[0], types.CallbackQuery):
+            if not args[0].data == 'back':
+                await args[0].bot.delete_message(args[0].message.chat.id, args[0].message.message_id)
+        else:
+            await args[0].bot.delete_message(args[0].chat.id, args[0].message_id-1)
+        return await func(*args, kwargs['state'])
+    return wrapper
+
+
+@deleter
+async def back_start(message: types.Message, state: FSMContext):
+    ''' старт после отмены регистрации'''
+    await state.finish()
+    await start(message)
+
 
 async def back(call: types.CallbackQuery, state: FSMContext):
+    await call.bot.delete_message(call.message.chat.id, call.message.message_id)
     res = await state.get_state()
     # print('enter', res, type(res))
     if res == None:
@@ -99,7 +111,7 @@ async def back(call: types.CallbackQuery, state: FSMContext):
         data = await state.get_data()
         func = data['func']
         # print(data['func'])
-        await func(call, state)
+        await func(call, state=state)
 
 
     elif res.split(':')[0] == 'Manager_new':
@@ -107,7 +119,7 @@ async def back(call: types.CallbackQuery, state: FSMContext):
         data = await state.get_data()
         func = data['func']
         # print(data['func'])
-        await func(call, state)
+        await func(call, state=state)
 
     res = await state.get_state()
     if res == None:
@@ -116,7 +128,7 @@ async def back(call: types.CallbackQuery, state: FSMContext):
         return
     # print("out", res)
 
-
+@deleter
 async def start_soc_media(message: types.Message, state: FSMContext):
     """Начало опроса (хочу попасть в ера)"""
     await state.set_state(SocMedia.Name.state)
@@ -128,7 +140,7 @@ async def start_soc_media(message: types.Message, state: FSMContext):
     markup = await back_keyboard('Отменить регистрацию')
     await message.message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_name(message: types.Message, state: FSMContext):
     """Запоминает имя, спрашивает основную соцсеть"""
     if isinstance(message, types.Message):
@@ -147,7 +159,7 @@ async def soc_media_name(message: types.Message, state: FSMContext):
     markup = await bloger_keyboard()
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_sm(call: types.CallbackQuery, state: FSMContext):
     """Запоминает осн.соцсеть, спраш. ссылку на соц.с."""
     await state.update_data(SM=call.data)
@@ -157,7 +169,7 @@ async def soc_media_sm(call: types.CallbackQuery, state: FSMContext):
     markup = await back_keyboard2('Отмена регистрации')
     await call.message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_link(message: types.Message, state: FSMContext):
     """Запоминает осн.соцсеть, спраш. подписч"""
     await state.update_data(func=soc_media_sm)
@@ -176,7 +188,7 @@ async def soc_media_link(message: types.Message, state: FSMContext):
             message = message.message
         await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_link2(message: types.Message, state: FSMContext):
     if isinstance(message, types.Message):
         await state.update_data(link=message.text)
@@ -190,11 +202,14 @@ async def soc_media_link2(message: types.Message, state: FSMContext):
     markup = await back_keyboard2('Отмена регистрации')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_subs(message: types.Message, state: FSMContext):
     """Запоминает subs, спрашивает city"""
     if isinstance(message, types.Message):
         await state.update_data(subs=message.text)
+        if not message.text.isdigit():
+            await message.answer('<b>Напишите только число, без текста</b>')
+            return
     if isinstance(message, types.CallbackQuery):
         message = message.message
     await state.update_data(func=soc_media_link2)
@@ -204,7 +219,7 @@ async def soc_media_subs(message: types.Message, state: FSMContext):
     markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_city(message: types.Message, state: FSMContext):
     """Запоминает city, спрашивает geo1"""
     if isinstance(message, types.Message):
@@ -222,7 +237,7 @@ async def soc_media_city(message: types.Message, state: FSMContext):
     markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_geo1(message: types.Message, state: FSMContext):
     """Запоминает geo1, спрашивает geo2"""
     if isinstance(message, types.Message):
@@ -240,7 +255,7 @@ async def soc_media_geo1(message: types.Message, state: FSMContext):
     markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def soc_media_geo2(message: types.Message, state: FSMContext):
     """Запоминает geo2, спрашивает тематику"""
     if isinstance(message, types.CallbackQuery):
@@ -301,7 +316,7 @@ async def soc_media_topic_2(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(text=text, reply_markup=markup)
     await state.set_state(SocMedia.Description.state)
 
-
+@deleter
 async def soc_media_topic_another(message: types.Message, state: FSMContext):
     if isinstance(message, types.CallbackQuery):
         message = message.message
@@ -316,13 +331,16 @@ async def soc_media_topic_another(message: types.Message, state: FSMContext):
     await message.answer(text=text, reply_markup=markup)
     await state.set_state(SocMedia.Topic.state)
 
-
+@deleter
 async def soc_media_description(message: types.Message, state: FSMContext):
     if isinstance(message, types.CallbackQuery):
         message = message.message
     """Заканчивает процесс регистрации"""
     if message.text.isdigit():
         await message.answer('<b>Напишите текстом</b>')
+        return
+    if len(message.text.split()) < 15:
+        await message.answer('<b>Вы написали меньше 15 слов.\nОпишите о чем Ваш блог <i>(используйте минимум 15 слов)</i></b>')
         return
     await state.update_data(desc=message.text)
     lst = await state.get_data()
@@ -332,7 +350,7 @@ async def soc_media_description(message: types.Message, state: FSMContext):
     await state.finish()
     print(lst)
 
-
+@deleter
 async def soc_media_description2(message: types.Message, state: FSMContext):
     """обработка завершение регистрации"""
     if isinstance(message, types.CallbackQuery):
@@ -340,23 +358,24 @@ async def soc_media_description2(message: types.Message, state: FSMContext):
     markup = await back_keyboard("В главное меню")
     text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
 
-Ожидайте ответного сообщения в Telegram от сотрудника ЕРА'''
+Ожидайте ответного сообщения от сотрудника ЕРА в этом боте'''
     await message.answer(text=text, reply_markup=markup)
 
 
 
 
 # MANAGER_NEW
-async def manager_new_start(call: types.Message, state: FSMContext):
+@deleter
+async def manager_new_start(call: types.CallbackQuery, state: FSMContext):
     """Начало опроса manager"""
     await state.set_state(Manager_new.Name.state)
     text = '''Ну что ж, приступим к добавлению. Это займет у Вас не более 1 минуты😉
 
 Как я могу к Вам обращаться?'''
-    markup = await back_keyboard('Назад')
+    markup = await back_keyboard('Отменить регистрацию')
     await call.message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def manager_new_name(message: types.Message, state: FSMContext):
     """Запись имя, вопрос кол-во блогеров"""
     await state.update_data(func=manager_new_start)
@@ -376,7 +395,7 @@ async def manager_new_name(message: types.Message, state: FSMContext):
     markup = await back_keyboard2('Отменить регистрацию')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def manager_new_count(message: types.Message, state: FSMContext):
     """Запись кол-во блогеров, вопрос назв комп"""
     if isinstance(message, types.Message):
@@ -391,7 +410,7 @@ async def manager_new_count(message: types.Message, state: FSMContext):
     markup = await pass_keyboard(q='Company')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def manager_new_company(message: types.Message, state: FSMContext):
     """Запись назв. компании, вопрос сайт комп."""
     await state.update_data(func=manager_new_count)
@@ -419,7 +438,7 @@ async def manager_new_company(message: types.Message, state: FSMContext):
     await message.answer(text, reply_markup=markup)
     await state.set_state(Manager_new.Link.state)
 
-
+@deleter
 async def manager_new_link(message: types.Message, state: FSMContext):
     """Запись сайт компании, вопрос подбор"""
     await state.update_data(func=manager_new_company)
@@ -427,7 +446,7 @@ async def manager_new_link(message: types.Message, state: FSMContext):
         await state.update_data(site='Нет')
         text = '<b>Занимаетесь ли Вы поиском / подбором блогеров под точечный запрос от клиента?</b>'
         markup = await manager_keyboard()
-        await message.message.edit_text(text, reply_markup=markup)
+        await message.message.answer(text, reply_markup=markup)
         await state.set_state(Manager_new.Q.state)
         return
     else:
@@ -441,7 +460,7 @@ async def manager_new_link(message: types.Message, state: FSMContext):
             markup = await pass_keyboard(q='Site')
     await message.answer(text, reply_markup=markup)
 
-
+@deleter
 async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
     """end manager"""
     if call.data == 'y':
@@ -453,7 +472,7 @@ async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
     markup = await back_keyboard("В главное меню")
     text = '''✅ Отлично. В ближайшее время с вами свяжутся наши специалисты
 
-    Ожидайте ответного сообщения в Telegram от сотрудника ЕРА'''
+Ожидайте ответного сообщения от сотрудника ЕРА в этом боте'''
     await call.message.answer(text=text, reply_markup=markup)
 
 
