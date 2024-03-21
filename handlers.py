@@ -41,23 +41,23 @@ async def number_wrong(message, number=True,
 async def start(message: types.Message):
     text = '''Приветствую! На связи Единое Рекламное Агентство ЕРА ✌🏻Жми:
 
-<b>Хочу попасть в базу ЕРА</b>
-✏️ Если ты блогер и хочешь попасть к нам в базу, чтобы получать рекламные/коммерческие и другие интересные предложения.
+<b>Я блогер, хочу в базу ЕРА</b>
+✏️ Получай рекламные/коммерческие и другие интересные предложения.
 
-<b>Менеджер блогеров / агентство</b>
-✏️Если у тебя есть блогеры/influence-агенство. Мы с радостью интегрируем тебя и твоих блогеров ко входящим рекламным запросам наших клиентов.
+<b>Я Менеджер блогеров / агентство</b>
+✏️ Интегрируем тебя и твоих блогеров ко входящим рекламным запросам наших клиентов.
 
 <b>Хочу работать в ЕРА</b>
-✏️Если хочешь стать частью yашей большой команды. Мы найдем место для всех😉 
+✏️Стань частью нашей большой команды. Мы найдем место для всех😉 
 
-<b>Influence-GR</b>
-✏️ Если хочешь получать  уведомления о бесплатных PR-событиях и мероприятиях и спец. проектах для паблишеров.
+<b>Мероприятия и бартеры</b>
+✏️ Получай уведомления о PR-событиях, мероприятиях и спец. проектах, которые ты можешь посетить бесплатно. В этой рубрике и другие бартеры: товарка, услуги и др. 
 
 <b>Сотрудничество </b>
 ✏️Мы «за» сотрудничество, партнерство и участие в интересных проектах. Пиши, возможно, твое предложение актуально нам как никогда😉 
 
-<b>Эксклюзивный контракт</b> 
-✏️Приоритет во всех проектах безусловно отдается резидентам агентства. Прочитай информацию о том, как им можно стать.
+<b>Эксклюзивный контракт</b>
+✏️Приоритет во всех проектах безусловно отдается резидassентам агентства. Прочитай информацию о том, как им можно стать.
 '''
     markup = await start_keyboard()
     if isinstance(message, types.Message):
@@ -100,9 +100,7 @@ async def back_start(message: types.Message, state: FSMContext):
 async def back(call: types.CallbackQuery, state: FSMContext):
     await call.bot.delete_message(call.message.chat.id, call.message.message_id)
     res = await state.get_state()
-    # print('enter', res, type(res))
     if res == None:
-        # print('its none')
         await start_again(call.message)
         return
 
@@ -110,7 +108,6 @@ async def back(call: types.CallbackQuery, state: FSMContext):
         await SocMedia.previous()
         data = await state.get_data()
         func = data['func']
-        # print(data['func'])
         await func(call, state=state)
 
 
@@ -118,15 +115,21 @@ async def back(call: types.CallbackQuery, state: FSMContext):
         await Manager_new.previous()
         data = await state.get_data()
         func = data['func']
-        # print(data['func'])
         await func(call, state=state)
+
+
+    elif res.split(':')[0] == 'Colab':
+        await SocMedia.previous()
+        data = await state.get_data()
+        func = data['func']
+        await func(call, state=state)
+
 
     res = await state.get_state()
     if res == None:
-        # print('its none')
         await start_again(call.message)
         return
-    # print("out", res)
+
 
 @deleter
 async def start_soc_media(message: types.Message, state: FSMContext):
@@ -137,7 +140,7 @@ async def start_soc_media(message: types.Message, state: FSMContext):
     text = '''Ну что ж, приступим к добавлению. Это займет у Вас не более 2-3 минут😉
 
 Как я могу к Вам обращаться?'''
-    markup = await back_keyboard('Отменить регистрацию')
+    markup = None
     await message.message.answer(text, reply_markup=markup)
 
 @deleter
@@ -591,18 +594,6 @@ async def work_load(message: types.Message, state: FSMContext):
     await start_again(message)
 
 
-# async def collaboration(message: types.Message):
-#     text = '''Приветствую Вас в разделе "Сотрудничество"
-#
-#     ✏️Пройдя краткую регистрацию в разделе "Бартер", Вы сможете бесплатно посещать разного рода мероприятия.
-#
-#     ✏️Зарегистрируетесь как менеджер блогеров, и мы свяжемся с Вами для сотрудничества, получив всю необходимую информацию
-#
-#     ✏️ По иным вопросам сотрудничетсва, нажмите на кнопку "Сотрудничество с ЕРА".'''
-#     markup = await colab_keyboard()
-#     await message.bot.send_message(chat_id=message.from_user.id, text=text, reply_markup=markup)
-
-
 # НАЧАЛО ОПРОСА БАРТЕР
 async def start_poll_barter(message: types.Message, state: FSMContext):
     ''' Начало опроса по бартеру, Name '''
@@ -769,67 +760,83 @@ async def manager_q(message: types.Message, state: FSMContext):
 
 
 # НАЧАЛО ОПРОСА СОТРУДНИЧЕСТВО
+@deleter
 async def start_poll_col(message: types.Message, state: FSMContext):
     ''' Начало опроса по сотрудничеству, Name '''
     await state.set_state(Colab.Name.state)
     await state.update_data(username=message.from_user.username)
     await state.update_data(user_id=message.from_user.id)
-    text = '''Для оставления заявки на сотрудничество следуйте инструкциям:
-    \nВпишите свое полное имя.'''
-    markup = await back_keyboard('Отменить регистрацию')
+    text = '''Для оставления заявки на сотрудничество ответьте на несколько вопросов.
+
+Это займет у Вас не более 2-3 минут😉
+
+Как я могу к Вам обращаться?'''
+    markup = None
     await message.bot.send_message(message.from_user.id, text, reply_markup=markup)
 
-
+@deleter
 async def colab_name(message: types.Message, state: FSMContext):
     ''' Запоминает name и спрашивает post'''
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=start_poll_col)
     await state.update_data(name=message.text)
-    text = 'Ваша должность'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Colab.Post.state)
+    text = '''<u>Вопрос 1 из 3</u> 
 
-
-async def colab_post(message: types.Message, state: FSMContext):
-    ''' Запоминает post и спрашивает company'''
-    await state.update_data(post=message.text)
-    text = 'Название Вашей компании'
-    markup = await back_keyboard('Отменить регистрацию')
+<b>Название Вашей компании</b>'''
+    markup = await pass_keyboard(q="Colab")
     await message.answer(text, reply_markup=markup)
     await state.set_state(Colab.Company.state)
 
-
+@deleter
 async def colab_company(message: types.Message, state: FSMContext):
     ''' Запоминает company и спрашивает reason'''
-    await state.update_data(company=message.text)
-    text = 'Причина Вашего обращения (как Вы хотите с нами сотрудничать). Напишите одним сообщением'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Colab.Reason.state)
+    await state.update_data(func=colab_name)
+    text = '''<u>Вопрос 2 из 3</u> 
 
-
-async def colab_reason(message: types.Message, state: FSMContext):
-    ''' Запоминает reason и спрашивает number'''
-    await state.update_data(reason=message.text)
-    text = 'Напишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Colab.Number.state)
-
-
-async def colab_number(message: types.Message, state: FSMContext):
-    ''' Запоминает номер, заканчивает регистрацию'''
-    if is_number(message.text) == True:
-        await state.update_data(number=message.text)
-        text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
-        await message.answer(text=text)
-        spreadsheet = client.open_by_key(spreadsheet_era_id)
-        sheet = spreadsheet.get_worksheet(3)
-        data = await state.get_data()
-        sheet.append_row(list(data.values()))
-        await state.finish()
-        await start_again(message)
+<b>Ваша должность</b>'''
+    markup = await pass_keyboard(q="Colab")
+    await state.set_state(Colab.Post.state)
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(company='Нет')
+        await message.message.answer(text, reply_markup=markup)
+        return
     else:
-        await number_wrong(message)
+        await state.update_data(company=message.text)
+        await message.answer(text, reply_markup=markup)
+
+    
+@deleter
+async def colab_post(message: types.Message, state: FSMContext):
+    ''' Запоминает post и спрашивает reason'''
+    await state.update_data(func=colab_company)
+    text = '''<u>Вопрос 3 из 3</u> 
+
+<b>Причина Вашего обращения</b>
+
+<i>(Опишите суть вашего обращения / Ваш запрос)</i>'''
+    markup = await back_keyboard2('Отменить регистрацию')
+    await state.set_state(Colab.Reason.state)
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(post='Нет')
+        await message.message.answer(text, reply_markup=markup)
+        return
+    else:
+        await state.update_data(post=message.text)
+    await message.answer(text, reply_markup=markup)
+
+@deleter
+async def colab_reason(message: types.Message, state: FSMContext):
+    ''' Запоминает reason и завершает опрос'''
+    await state.update_data(reason=message.text)
+    text = '''✅ Благодарю, Вы оставили вашу заявку на сотрудничество.
+
+Ожидайте ответного сообщения от сотрудника ЕРА в этом боте'''
+    lst = await state.get_data()
+    await message.answer(text)
+    print(lst)
+    await state.finish()
+    await start_again(message)
 
 
 # НАЧАЛО ОПРОСА БЛОГЕР
@@ -2129,9 +2136,11 @@ def registration_handlers(dp: Dispatcher):
     # Сотрудничество
     dp.register_message_handler(colab_name, state=Colab.Name)
     dp.register_message_handler(colab_post, state=Colab.Post)
+    dp.register_callback_query_handler(colab_post, state=Colab.Post)
     dp.register_message_handler(colab_company, state=Colab.Company)
+    dp.register_callback_query_handler(colab_company, state=Colab.Company)
+    dp.register_callback_query_handler(colab_reason, state=Colab.Reason)
     dp.register_message_handler(colab_reason, state=Colab.Reason)
-    dp.register_message_handler(colab_number, state=Colab.Number)
     # Instagram
     dp.register_message_handler(inst_number, state=Instagram.Number)
     dp.register_message_handler(inst_number_wait, state=Instagram.Wait)
