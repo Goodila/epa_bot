@@ -1,0 +1,19 @@
+2024-02-25 20:35:54,165 - [INFO] - Start polling.(dispatcher.py).start_polling,(358) - Start polling.
+2024-02-25 20:36:25,280 - [WARNING] - Polling is stopped.(dispatcher.py).start_polling,(405) - Polling is stopped.
+/root/bots/epa_bot/main.py:29: DeprecationWarning: Call to deprecated function session (Client session should be created inside async function, use `await bot.get_session()` instead).
+  await bot.session.close()
+Traceback (most recent call last):
+  File "/root/bots/epa_bot/main.py", line 33, in <module>
+    asyncio.run(start())  
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1871, in _run_once
+    event_list = self._selector.select(timeout)
+  File "/usr/lib/python3.10/selectors.py", line 469, in select
+    fd_event_list = self._selector.poll(timeout, max_ev)
+KeyboardInterrupt
+2024-02-25 20:36:25,336 - [INFO] - Stop polling...(dispatcher.py).stop_polling,(433) - Stop polling...

@@ -420,7 +420,7 @@ async def manager_new_company(message: types.Message, state: FSMContext):
             await state.update_data(company='Нет')
             text = '''<b>Укажите ссылку на Ваш сайт</b>\n\n<i>Если нет - пропустите вопрос</i>'''
             markup = await pass_keyboard(q='Site')
-            await message.message.edit_text(text, reply_markup=markup)
+            await message.message.answer(text, reply_markup=markup)
             await state.set_state(Manager_new.Link.state)
             return
     else:
