@@ -10,6 +10,7 @@ async def start_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text='Influence-GR', callback_data='barter'),
         InlineKeyboardButton(text='Сотрудничество', callback_data='colab_start'),
         InlineKeyboardButton(text='Эксклюзивный контракт', callback_data='exclusive_conract'),
+        InlineKeyboardButton(text='КЛИЕНТАМ', callback_data='for_clients'),
         InlineKeyboardButton(text='Контакты', callback_data='contacts')
     ]
     markup = InlineKeyboardMarkup(row_width=1)
@@ -125,13 +126,45 @@ async def back_keyboard2(string) -> InlineKeyboardMarkup:
     return markup
 
 
-async def pass_keyboard(q) -> InlineKeyboardMarkup:
+async def pass_keyboard(q, a=None) -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(text=f'Назад', callback_data='back'),
-        InlineKeyboardButton(text='Пропустить вопрос', callback_data=f'pass_{q}'),
+        InlineKeyboardButton(text=q if a!=None else 'Пропустить вопрос', callback_data=f'pass_{q}'),
     ]
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(*buttons)
     return markup
 
 
+async def work_keyboard() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Пройти анкетирование', callback_data='work_profile'),
+        InlineKeyboardButton(text='Назад', callback_data='start')
+    ]
+    markup = InlineKeyboardMarkup( row_width=1)
+    markup.add(*buttons)
+    return markup
+
+
+async def client_keyboard() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Оставить заявку', callback_data='clients_start'),
+        InlineKeyboardButton(text='Назад', callback_data='start')
+    ]
+    markup = InlineKeyboardMarkup( row_width=1)
+    markup.add(*buttons)
+    return markup
+
+
+async def client_TypeColab_keyboard() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text='Комерция', callback_data='Комерция'),
+        InlineKeyboardButton(text='Бартер', callback_data='Бартер'),
+        InlineKeyboardButton(text='Тендер', callback_data='Тендер'),
+        InlineKeyboardButton(text='Другое', callback_data='Другое'),
+        InlineKeyboardButton(text='Назад', callback_data='back'),
+        InlineKeyboardButton(text='Отменить регистрацию', callback_data='start')
+    ]
+    markup = InlineKeyboardMarkup( row_width=1)
+    markup.add(*buttons)
+    return markup

@@ -31,16 +31,31 @@ class Manager(StatesGroup):
     Q = State()
 
 
+class Work_write(StatesGroup):
+    Pass = State()
+    Text = State()
+
+
 class Work(StatesGroup):
-    Number = State()
     Name = State()
-    Age = State()
     Post = State()
-    Why = State()
-    Know_from = State()
+    Exp = State()
+    Skills = State()
+    Reason = State()
+    Age = State()
+    Load = State()
     Link_resume = State()
     Link_case = State()
-    Load = State()
+
+
+class Client(StatesGroup):
+    Name = State()
+    Company = State()
+    Post = State()
+    Site = State()
+    Reason = State()
+    Type = State()
+    End = State()
 
 
 class Barter(StatesGroup):
