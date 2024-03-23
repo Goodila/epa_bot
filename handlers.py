@@ -1,10 +1,11 @@
 import os
 from aiogram import types, Dispatcher, types
-from keyboards import start_keyboard, manager_keyboard, bloger_keyboard, number_keyboard, registr_end
-from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, back_keyboard2, reels_keyboard, pass_keyboard
+from keyboards import start_keyboard, manager_keyboard, bloger_keyboard, number_keyboard, registr_end, work_keyboard
+from keyboards import topic_keyboard, topic_keyboard_2, back_keyboard, back_keyboard2, reels_keyboard, pass_keyboard, client_keyboard
+from keyboards import client_TypeColab_keyboard 
 from aiogram.dispatcher import FSMContext
 from states import SocMedia
-from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another, Manager_new
+from states import Work, Barter, Manager, Colab, Instagram, YT, VK, TG, DZ, Another, Manager_new, Work_write, Client
 from funcs import get_config, Bloger, is_link, is_number
 import time
 from asyncio import sleep
@@ -120,6 +121,20 @@ async def back(call: types.CallbackQuery, state: FSMContext):
 
     elif res.split(':')[0] == 'Colab':
         await SocMedia.previous()
+        data = await state.get_data()
+        func = data['func']
+        await func(call, state=state)
+
+
+    elif res.split(':')[0] == 'Work':
+        await Work.previous()
+        data = await state.get_data()
+        func = data['func']
+        await func(call, state=state)
+
+
+    elif res.split(':')[0] == 'Client':
+        await Client.previous()
         data = await state.get_data()
         func = data['func']
         await func(call, state=state)
@@ -479,121 +494,6 @@ async def manager_new_q(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer(text=text, reply_markup=markup)
 
 
-# async def k(message: types.Message, state: FSMContext):
-#     text = f'''<u>Вопрос 5 из 6</u>
-# Укажите тематику Вашего блога?'''
-#     lst = get_config(flag=True)
-#     await state.set_state(SocMedia.Topic.state)
-#     markup = await topic_keyboard(lst)
-#     await message.answer(text, reply_markup=markup)
-
-
-async def start_poll_work(message: types.Message, state: FSMContext):
-    ''' Начало опроса по анкете на работу, номер телефона '''
-    await state.set_state(Work.Number.state)
-    await state.update_data(username=message.from_user.username)
-    await state.update_data(user_id=message.from_user.id)
-    text = '''Для заполнения анкеты на трудоустройство следуйте инструкциям:
-    \nНапишите свой номер телефона, привязанный к WhatsApp в формате +7***-***-**-**'''
-    markup = await back_keyboard('Назад')
-    await message.message.edit_text(text, reply_markup=markup)
-
-
-async def work_number(message: types.Message, state: FSMContext):
-    ''' Запоминает номер телефона, спрашивает имя'''
-    if is_number(message.text) == True:
-        await state.update_data(number=message.text)
-        text = 'Впишите свое полное ФИО'
-        await state.set_state(Work.Name.state)
-        markup = await back_keyboard('Отменить регистрацию')
-        await message.answer(text, reply_markup=markup)
-    else:
-        text = 'Вы ввели номер неверного формата. Пожалуйства, следуйте формату +7***-***-**-**. \nВведите номер телефона повторно'
-        markup = await back_keyboard('Отменить регистрацию')
-        await message.answer(text, reply_markup=markup)
-
-
-async def work_name(message: types.Message, state: FSMContext):
-    ''' Запоминает имя, спрашивает возраст'''
-    await state.update_data(name=message.text)
-    text = 'Напишите свой возраст'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Age.state)
-
-
-async def work_age(message: types.Message, state: FSMContext):
-    ''' Запоминает возраст, спрашивает должность'''
-    await state.update_data(age=message.text)
-    text = 'Напишите желаемую должность в компании'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Post.state)
-
-
-async def work_post(message: types.Message, state: FSMContext):
-    ''' Запоминает должность, спрашивает Hard & Soft Skills '''
-    await state.update_data(post=message.text)
-    text = 'Напишите Ваши Hard и Soft skills одним сообщением'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Why.state)
-
-
-async def work_why(message: types.Message, state: FSMContext):
-    ''' Запоминает hard & soft, почему именно ЕРА'''
-    await state.update_data(why=message.text)
-    text = 'Почему Вы выбрали именно ЕРА для трудоустройства?'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Know_from.state)
-
-
-async def work_know_from(message: types.Message, state: FSMContext):
-    ''' Запоминает почему ЕРА, спрашивает резюме'''
-    await state.update_data(know_from=message.text)
-    text = 'Пришлите ссылку на Ваше резюме'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Link_resume.state)
-
-
-async def work_resume(message: types.Message, state: FSMContext):
-    ''' Запоминает резюме, спрашивает кейсы'''
-    if is_link(message.text) == True:
-        await state.update_data(resume=message.text)
-        text = 'Ссылка на кейсы.\n*Впишите ссылку или впишите "нет"'
-        markup = await back_keyboard('Отменить регистрацию')
-        await message.answer(text, reply_markup=markup)
-        await state.set_state(Work.Link_case.state)
-    else:
-        text = 'К сожалению, Вы прислали ссылку неверного формата. Повторно укажите сылку в формате "https://somesite.ru"'
-        markup = await back_keyboard('Отменить регистрацию')
-        await message.answer(text, reply_markup=markup)
-
-
-async def work_case(message: types.Message, state: FSMContext):
-    ''' запоминает кейсы, спрашивает про загруженность '''
-    await state.update_data(case=message.text)
-    text = 'Текущая степень загруженности (учеба, другая работа, разница во времени с МСК)'
-    markup = await back_keyboard('Отменить регистрацию')
-    await message.answer(text, reply_markup=markup)
-    await state.set_state(Work.Load.state)
-
-
-async def work_load(message: types.Message, state: FSMContext):
-    ''' Запоминает load, заканчивает регистрацию'''
-    await state.update_data(load=message.text)
-    text = '✅ Благодарим за интерес к сотрудничеству! С вами свяжутся в ближайшее время наши специалисты '
-    await message.answer(text=text)
-    spreadsheet = client.open_by_key(spreadsheet_era_id)
-    sheet = spreadsheet.get_worksheet(0)
-    data = await state.get_data()
-    sheet.append_row(list(data.values()))
-    await state.finish()
-    await start_again(message)
-
-
 # НАЧАЛО ОПРОСА БАРТЕР
 async def start_poll_barter(message: types.Message, state: FSMContext):
     ''' Начало опроса по бартеру, Name '''
@@ -837,6 +737,357 @@ async def colab_reason(message: types.Message, state: FSMContext):
     print(lst)
     await state.finish()
     await start_again(message)
+
+
+# НАЧАЛО ОПРОСА ЭКСКЛЮЗИВНЫЙ КОНТРАКТ
+@deleter
+async def start_ExcConract(call: types.CallbackQuery, state: FSMContext):
+    text = '''Сейчас я перенаправлю тебя на руководителя отдела инфлюенс-маркетинга. Отправь ему сообщение по этой форме:
+
+1) Ссылки на все социальные сети с количеством подписчиков в каждой из них
+
+Пример:
+Telegram (354 тыс)- ссылка
+VK (223 тыс) - ссылка 
+Instagram (15 тыс) - ссылка 
+
+2) Скрины статистика по каждой из них 
+
+3) Краткая информация о себе
+
+Контакт:
+https://t.me/ByAlexeev''' 
+    markup = await back_keyboard("Назад")
+    await call.message.answer(text, reply_markup=markup)
+
+
+# НАЧАЛО ОПРОСА ЭКСКЛЮЗИВНЫЙ КОНТРАКТ
+@deleter
+async def start_Work(call: types.CallbackQuery, state: FSMContext):
+    with open('work.txt', encoding='utf-8') as f:
+        text = f.read() 
+    markup = await work_keyboard()
+    await call.message.answer(text, reply_markup=markup, disable_web_page_preview=True)
+
+
+@deleter
+async def work_profile_start(call: types.CallbackQuery, state: FSMContext):
+    """Спрашивает имя"""
+    await state.set_state(Work.Name.state)
+    await state.update_data(func=start_Work)
+    if call.data == 'work_profile':
+        await state.update_data(username=call.from_user.username)
+        await state.update_data(user_id=call.from_user.id)
+    text = """Ну что-ж, приступим к анкетированию. Это займет у Вас не более 2-3 минут😉\n
+Как я могу к Вам обращаться?"""
+    markup = None
+    await call.message.answer(text, reply_markup=markup)
+
+
+
+@deleter
+async def work_name(message: types.Message, state: FSMContext):
+    "Запоминает имя, спрашивает должность"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(name=message.text)
+    await state.update_data(func=work_profile_start)
+    text = """<u>Вопрос 1 из 8</u>\n
+<b>Напишите желаемую должность в компании</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Post.state)
+    await message.answer(text, reply_markup=markup)
+
+
+
+@deleter
+async def work_post(message: types.Message, state: FSMContext):
+    "Запоминает должность, спрашивает опыт"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(post=message.text)
+    await state.update_data(func=work_name)
+    text = """<u>Вопрос 2 из 8</u>\n
+<b>Если ли у вас опыт в этой должности, если есть, то какой он?</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Exp.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_exp(message: types.Message, state: FSMContext):
+    "Запоминает exp, спрашивает skills"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(exp=message.text)
+    await state.update_data(func=work_post)
+    text = """<u>Вопрос 3 из 8</u>\n
+<b>Ваши главные Hard и Soft skills</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Skills.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_skills(message: types.Message, state: FSMContext):
+    "Запоминает skills, спрашивает REASON"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(skills=message.text)
+    await state.update_data(func=work_exp)
+    text = """<u>Вопрос 4 из 8</u>\n
+<b>Почему Вы хотите трудоустроится в ЕРА?</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Reason.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_reason(message: types.Message, state: FSMContext):
+    "Запоминает reason, спрашивает age"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message    
+    else:
+        await state.update_data(reason=message.text)
+    await state.update_data(func=work_skills)
+    text = """<u>Вопрос 5 из 8</u>\n
+<b>Напишите свой возраст</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Age.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_age(message: types.Message, state: FSMContext):
+    "Запоминает age, спрашивает load"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(age=message.text)
+    await state.update_data(func=work_reason)
+    text = """<u>Вопрос 6 из 8</u>\n
+<b>Текущая степень загруженности (учеба, другая работа, разница во времени с МСК)</b>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Work.Load.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_load(message: types.Message, state: FSMContext):
+    "Запоминает load, спрашивает resume"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    else:
+        await state.update_data(load=message.text)
+    await state.update_data(func=work_age)
+    text = """<u>Вопрос 7 из 8</u>\n
+<b>Пришлите ссылку на Ваше резюме:</b>"""
+    markup = await pass_keyboard('Нет резюме', a=True) 
+    await state.set_state(Work.Link_resume.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_linkResume(message: types.Message, state: FSMContext):
+    "Запоминает resume, спрашивает case"
+    await state.update_data(func=work_load)
+    text = """<u>Вопрос 8 из 8</u>\n
+<b>Пришлите ссылку на Ваши кейсы:</b>"""
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+        await state.update_data(resume="нет резюме")
+        await state.set_state(Work.Link_case.state)
+        markup = await pass_keyboard('Нет кейсов', a=True) 
+        await message.answer(text, reply_markup=markup)
+        return
+    if is_link(message.text) == True:
+        await state.update_data(resume=message.text)
+    else:
+        await number_wrong(message, number=False)
+        return
+    markup = await pass_keyboard('Нет резюме', a=True) 
+    await state.set_state(Work.Link_case.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def work_linkCase(message: types.Message, state: FSMContext):
+    "Запоминает case, завершает регистрацию"
+    await state.update_data(func=work_linkResume)
+    text = """Благодарю, Вы прошли анкетирование. \n\nОжидайте ответного сообщения от сотрудника ЕРА в этом боте"""
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+        await state.update_data(case="нет кейсов")
+    elif is_link(message.text) == True:
+        await state.update_data(case=message.text)
+    else:
+        await number_wrong(message, number=False)
+        return
+    lst = await state.get_data()
+    print(lst)
+    await message.answer(text)
+    await state.finish()
+    await start_again(message)
+
+
+@deleter
+async def work_write(message: types.Message, state: FSMContext):
+    text = 'Введите пароль для изменения текcта вакансий '
+    await state.set_state(Work_write.Pass.state)
+    await message.answer(text)
+
+
+async def work_pass(message: types.Message, state: FSMContext):
+    if message.text != 'era123123':
+        await start(message)
+        await state.finish()
+        return
+    await state.set_state(Work_write.Text.state)
+    text = 'СТАРЫЙ ТЕКСТ: \n\n\n'
+    with open('work.txt', encoding='utf-8') as f:
+        text += f.read() 
+    text += '\n\n\n Теперь введите новый текст для этого раздела'
+    await state.set_state(Work_write.Text.state)
+    await message.answer(text, disable_web_page_preview=True)
+
+@deleter
+async def work_text(message: types.Message, state: FSMContext):
+    text = message.text
+    with open('work.txt', mode='w', encoding='utf-8') as f:
+        f.write(text)
+    with open('work.txt', encoding='utf-8') as f:
+        text = 'НОВЫЙ ТЕКСТ: \n\n\n' + f.read() 
+    await message.answer(text, disable_web_page_preview=True)
+    await sleep(4)
+    await state.finish()
+    await start(message)
+
+
+# НАЧАЛО ОПРОСА КЛИЕНТАМ
+@deleter
+async def clients_start(call: types.CallbackQuery, state: FSMContext):
+    "нааинает опрос по клиентам"
+    await state.set_state(Client.Name.state)
+    await state.update_data(username=call.from_user.username)
+    await state.update_data(user_id=call.from_user.id)
+    text = """Оставьте свою заявку. С Вами свяжется спеиалист ЕРА в течение часа после ее заполнения."""
+    markup = await client_keyboard()
+    await call.message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_name(message: types.Message, state: FSMContext):
+    "спрашивает имя"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=clients_start)
+    text = """Отлично, как я могу к Вам обращаться?"""
+    markup = None 
+    await state.set_state(Client.Company.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_company(message: types.Message, state: FSMContext):
+    "спрашивает компанию"
+    if isinstance(message, types.CallbackQuery):
+        message = message.message
+    await state.update_data(func=clients_name)
+    text = """<u>Вопрос 1 из 5</u>\n
+<b>Название Вашей компании</b>"""
+    markup = await pass_keyboard('Пропустить вопрос', a=True) 
+    await state.set_state(Client.Post.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_post(message: types.Message, state: FSMContext):
+    "запоминает company, спрашивает post"
+    await state.update_data(func=clients_company)
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(company='нет')
+        message = message.message
+    else:
+        await state.update_data(company=message.text)
+    text = """<u>Вопрос 2 из 5</u>\n
+<b>Ваша должность</b>"""
+    markup = await pass_keyboard('Пропустить вопрос', a=True) 
+    await state.set_state(Client.Site.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_site(message: types.Message, state: FSMContext):
+    "запоминает post, спрашивает site"
+    await state.update_data(func=clients_post)
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(post='нет')
+        message = message.message
+    else:
+        await state.update_data(post=message.text)
+    text = """<u>Вопрос 3 из 5</u>\n
+<b>Ссылки на сайт или другой ресурс</b>"""
+    markup = await pass_keyboard('Пропустить вопрос', a=True) 
+    await state.set_state(Client.Reason.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_reason(message: types.Message, state: FSMContext):
+    "запоминает site, спрашивает reason"
+    await state.update_data(func=clients_site)
+    if isinstance(message, types.CallbackQuery):
+        await state.update_data(post='нет')
+        message = message.message
+    elif is_link(message.text) == True:
+        await state.update_data(site=message.text)
+    else:
+        await number_wrong(message, number=False)
+        return
+    text = """<u>Вопрос 4 из 5</u>\n
+<b>Причина Вашего обращения</b>\n
+<i>(Опишите суть Вашего обращения / Ваш запрос)</i>"""
+    markup = await back_keyboard2('Отменить регистрацию') 
+    await state.set_state(Client.Type.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_type(message: types.Message, state: FSMContext):
+    "спрашивает компанию"
+    await state.update_data(func=clients_reason)
+    await state.update_data(reason=message.text)
+    text = """<u>Вопрос 5 из 5</u>\n
+<b>Тип желаемого сотрудничества</b>"""
+    markup = await client_TypeColab_keyboard() 
+    await state.set_state(Client.End.state)
+    await message.answer(text, reply_markup=markup)
+
+
+@deleter
+async def clients_end(call: types.CallbackQuery, state: FSMContext):
+    "запоминает typeColab, заканчивает регистрацию"
+    if isinstance(call, types.Message):
+        text = "Выберите тип сотрудничества, нажав на кнопку"
+        await call.answer(text)
+        return
+    await state.update_data(type=call.data)
+    text = """Благодарю, Вы оставили заявку на сотрудничество.\n
+Ожидайте ответного сообщения от сотрудника ЕРА в этом боте в течение часа.\n
+Также просим изучить условия работы нашего Агенства ЕРА:\n
+Условия:
+https://bloggers.era-agency.ru"""
+    markup = await back_keyboard('в меню') 
+    lst = await state.get_data()
+    print(lst)
+    await state.finish()
+    await call.message.answer(text, reply_markup=markup, disable_web_page_preview=True)
+
+"""TODO: testing clients and work"""
 
 
 # НАЧАЛО ОПРОСА БЛОГЕР
@@ -2064,6 +2315,7 @@ WhatsApp: +7 (993) 338-78-28'''
 def registration_handlers(dp: Dispatcher):
     # Commands
     dp.register_message_handler(start, commands=['start'])
+    dp.register_message_handler(work_write, commands=['work'])
     dp.register_message_handler(start, text=['старт'])
     dp.register_callback_query_handler(back_start, state='*', text='start')
     # dp.register_message_handler(k, commands=['k'])
@@ -2092,12 +2344,40 @@ def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(manager_new_link, state=Manager_new.Link)
     dp.register_callback_query_handler(manager_new_link, state=Manager_new.Link)
     dp.register_callback_query_handler(manager_new_q, state=Manager_new.Q)
-
+    # work
+    dp.register_message_handler(work_pass, state=Work_write.Pass)
+    dp.register_message_handler(work_text, state=Work_write.Text)
+    # work profile
+    dp.register_callback_query_handler(work_profile_start, text="work_profile")
+    dp.register_message_handler(work_name, state=Work.Name)
+    dp.register_message_handler(work_post, state=Work.Post)
+    dp.register_message_handler(work_exp, state=Work.Exp)
+    dp.register_message_handler(work_skills, state=Work.Skills)
+    dp.register_message_handler(work_reason, state=Work.Reason)
+    dp.register_message_handler(work_age, state=Work.Age)
+    dp.register_message_handler(work_load, state=Work.Load)
+    dp.register_message_handler(work_linkResume, state=Work.Link_resume)
+    dp.register_callback_query_handler(work_linkResume, state=Work.Link_resume)
+    dp.register_message_handler(work_linkCase, state=Work.Link_case)
+    dp.register_callback_query_handler(work_linkCase, state=Work.Link_case)
+    # for_clients
+    dp.register_callback_query_handler(clients_start, text='for_clients')
+    dp.register_callback_query_handler(clients_name, state=Client.Name)
+    dp.register_message_handler(clients_company, state=Client.Company)
+    dp.register_message_handler(clients_post, state=Client.Post)
+    dp.register_callback_query_handler(clients_post, state=Client.Post)
+    dp.register_message_handler(clients_site, state=Client.Site)
+    dp.register_callback_query_handler(clients_site, state=Client.Site)
+    dp.register_message_handler(clients_reason, state=Client.Reason)
+    dp.register_callback_query_handler(clients_reason, state=Client.Reason)
+    dp.register_message_handler(clients_type, state=Client.Type)
+    dp.register_message_handler(clients_end, state=Client.End)
+    dp.register_callback_query_handler(clients_end, state=Client.End)
 
 
     # Callbacks
     dp.register_callback_query_handler(start_poll_col, text='colab_start')
-    dp.register_callback_query_handler(start_poll_work, text='work')
+    dp.register_callback_query_handler(start_Work, text='work')
     # dp.register_callback_query_handler(collaboration, text='collaboration')
     dp.register_callback_query_handler(start_poll_barter, text='barter')
     dp.register_callback_query_handler(start_soc_media, text='bloger')
@@ -2107,17 +2387,8 @@ def registration_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(start_poll_tg, text='TG')
     dp.register_callback_query_handler(start_poll_dz, text='Дзен')
     dp.register_callback_query_handler(start_poll_another, text='Другое')
+    dp.register_callback_query_handler(start_ExcConract, text='exclusive_conract')
     # States
-    # Хочу работать в ЕРА
-    dp.register_message_handler(work_number, state=Work.Number)
-    dp.register_message_handler(work_name, state=Work.Name)
-    dp.register_message_handler(work_age, state=Work.Age)
-    dp.register_message_handler(work_post, state=Work.Post)
-    dp.register_message_handler(work_why, state=Work.Why)
-    dp.register_message_handler(work_know_from, state=Work.Know_from)
-    dp.register_message_handler(work_resume, state=Work.Link_resume)
-    dp.register_message_handler(work_case, state=Work.Link_case)
-    dp.register_message_handler(work_load, state=Work.Load)
     # Бартер
     dp.register_message_handler(barter_name, state=Barter.Name)
     dp.register_message_handler(barter_number, state=Barter.Number)
