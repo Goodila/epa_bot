@@ -84,9 +84,11 @@ def deleter(func):
     async def wrapper(*args, **kwargs):
         if isinstance(args[0], types.CallbackQuery):
             if not args[0].data == 'back':
-                await args[0].bot.delete_message(args[0].message.chat.id, args[0].message.message_id)
+                try:await args[0].bot.delete_message(args[0].message.chat.id, args[0].message.message_id)
+                except: pass
         else:
-            await args[0].bot.delete_message(args[0].chat.id, args[0].message_id-1)
+            try: await args[0].bot.delete_message(args[0].chat.id, args[0].message_id-1)
+            except: pass
         return await func(*args, kwargs['state'])
     return wrapper
 

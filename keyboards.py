@@ -7,7 +7,7 @@ async def start_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text='Хочу попасть в базу ЕРА', callback_data='bloger'),
         InlineKeyboardButton(text='Менеджер блогеров / агенство', callback_data='manager'),
         InlineKeyboardButton(text='Хочу работать в ЕРА', callback_data='work'),
-        InlineKeyboardButton(text='Influence-GR', callback_data='barter'),
+        InlineKeyboardButton(text='Мероприятия Бартера', callback_data='barter'),
         InlineKeyboardButton(text='Сотрудничество', callback_data='colab_start'),
         InlineKeyboardButton(text='Эксклюзивный контракт', callback_data='exclusive_conract'),
         InlineKeyboardButton(text='КЛИЕНТАМ', callback_data='for_clients'),
